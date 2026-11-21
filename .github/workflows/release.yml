@@ -1,0 +1,90 @@
+# Checks pull requests to main, and tags every merge to main as a release (#4).
+# Modelled on heath.js's release.yml, without the container image: vira 1.0 is a CLI.
+#
+#   Pull request to main:  lint → typecheck → test → build → version check
+#   Push to main (merge):  the same checks → tag vX.Y.Z
+#
+# Tagging uses the run's own GITHUB_TOKEN, so no secrets are needed.
+
+name: Release
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+# Read-only by default; the tag job asks for more below.
+permissions:
+  contents: read
+
+# One run per branch at a time. A newer push to a pull request cancels its older run.
+# On main a running release always finishes, but only one more can wait: if several
+# merges land while one runs, the newest waiting run replaces the older ones, and their
+# versions get no tag of their own.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  test:
+    name: Test and check version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # all history and tags, for the version check
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Run the tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      # Fails unless package.json's version is above the latest vX.Y.Z tag (sort -V compares
+      # versions numerically, so 0.10.0 > 0.9.0). Catches a forgotten bump on the pull request,
+      # and keeps a merge from tagging a version twice. vira uses plain X.Y.Z versions: sort -V
+      # would rank a pre-release such as 0.2.0-rc.1 above 0.2.0.
+      # If a merge fails here because another pull request took the version first, bump again
+      # in a new pull request.
+      - name: Check the version was bumped
+        run: |
+          version=$(node -p "require('./package.json').version")
+          latest=$(git tag --list 'v[0-9]*' --sort=-v:refname | head -n1)
+          highest=$(printf '%s\n%s\n' "${latest#v}" "$version" | sort -V | tail -n1)
+          if [ "v$version" = "$latest" ] || [ "$highest" != "$version" ]; then
+            echo "::error::package.json version $version must be higher than $latest. Bump it with npm version patch --no-git-tag-version (or minor)."
+            exit 1
+          fi
+          echo "Version $version is higher than ${latest:-any release so far}."
+
+  tag:
+    name: Tag the release
+    if: github.event_name == 'push'
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # push the vX.Y.Z tag
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Tag the release
+        run: |
+          version=$(node -p "require('./package.json').version")
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "v$version" -m "vira $version"
+          git push origin "v$version"
