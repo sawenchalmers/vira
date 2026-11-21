@@ -4,3 +4,4 @@
  */
 export * from "./cards.js";
 export * from "./notation.js";
+export * from "./random.js";
