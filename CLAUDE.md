@@ -2,7 +2,7 @@
 
 This project builds a simulator for **Isbergsvira**, a Swedish trick-taking card game for
 three active players (four at the table, one resting each deal), played on a bidding
-ladder called **Isberget**. The user plays one seat; the other three seats are AI player
+table, the **budtabell** (colloquially **Isberget**). The user plays one seat; the other three seats are AI player
 agents. A coach agent gives the user suggestions.
 
 Read `SPEC.md` for the full rules-engine specification and architecture.
@@ -52,34 +52,16 @@ apply to Claude directly.
      **before** any talong card is revealed;
   2. the köp;
   3. after the köp and after **each** Omköp: buy again (Omköp) or not;
-  4. play or **lay** (lägga spelet).
+  4. play or **fold** (lägga spelet).
 - The user may look at their own discards (kastkort) until they play to the first trick.
-- Show each trick in a table: Stick | Utspel | (seats in play order) | Tar | score.
+- Show each trick in a table: Stick | Utspel | (seats in play order) | Tar | Ställning (lomber's tricks – the defence's).
 - Protocol format: see SPEC.md §9. Always in a code block.
 
-## Simulated player behaviour (tuning the user has asked for)
+## AI players and coach
 
-- Follow the avpassningskonventioner (AK) most of the time, but **tjuvpass slightly less
-  often** than a naive bot would – outbid a bit more often instead of passing without
-  meeting the AK. Avoid a stream of easy hemgångar.
-- Lomber should consider **laying** after the köp when hemgång looks unlikely.
-- Köp in trumpspel: generally keep only trumps plus side-suit aces (lomber and defenders).
-- Defence köp kutym (trumpspel): vänster buys all if it holds ≥3 trumps, trump K singleton
-  or trump D doubleton, otherwise nothing; höger buys as much as possible but never discards
-  aces or trumps.
-- Defence köp against misär (e.g. Köpmisär): the main goal is a **renons**, so sell
-  (discard) all cards in the shortest suit. But don't sell promising low cards such as a 2
-  or a 3. With a singleton 2 or 3, it is fine to buy deeper to protect it.
-- Defence köp against Trumfsolo: aim to get the whole talong bought. First buyer discards
-  9–10 if possible; if that would mean discarding trumps or aces, buy only 3–4 instead.
-- Defence play:
-  - Don't lead trumps as defender unless lomber is close to running out of trumps.
-  - When partner leads an honour and lomber plays last, take with the side ace rather than
-    ducking; take side aces early in trumpspel.
-  - Don't ruff a trick partner is already winning with the highest remaining card.
-  - Don't ruff unnecessarily when partner, playing after you, may win the trick.
-  - Remember that partner's honour may sit "andra" (doubleton) and fall.
-- Ågren discard signals (defence, read after two discards) – see SPEC.md §8.
+The AI players' strategy and kutym (the tuning the user has asked for) live in
+`agents/player.md`, and the coach's instructions in `agents/coach.md`. They use the terms
+and code names in SPEC.md §0; keep them in line with it.
 
 ## Decisions (2026-11-21, see issue #1)
 
@@ -100,7 +82,7 @@ apply to Claude directly.
   Where SPEC.md §7 says "subagent", read it as one API call per decision.
 - **Contracts are data, not code per family.** A contract is a record of parameters (goal,
   trump source, exchange, visibility, constraints, what's allowed, payment, AK) and the
-  Isberget ladder is a table of records; the engine runs one pipeline and builds each
+  budtabell is a table of records; the engine runs one pipeline and builds each
   mechanism once (#30). This replaces the per-family build order in SPEC.md §10.
   The table rules (players, rotation, Färg, böter, payment units) are a ruleset record too.
 - **A game is its ruleset, seed and move log** (#40): saving, resuming, replays, undo in

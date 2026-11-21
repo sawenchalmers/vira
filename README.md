@@ -1,7 +1,7 @@
 # vira
 
 A simulator for **Isbergsvira** (Nivåvira), a Swedish trick-taking card game for four at
-the table: three play each deal and one rests, bidding on a ladder called **Isberget**.
+the table: three play each deal and one rests, bidding by a table called the **budtabell** (colloquially **Isberget**).
 
 The plan: you play one seat, the other three seats are AI players, and a coach suggests one
 move at each of your decisions. The design keeps every AI player and the coach from knowing
@@ -38,8 +38,8 @@ npm run build      # compile to dist/
 ## Documents
 
 - [`SPEC.md`](SPEC.md): the rules engine and agent architecture specification.
-- [`CLAUDE.md`](CLAUDE.md): how the game is presented, how the AI players behave, and how
-  work is done in this repo.
+- [`CLAUDE.md`](CLAUDE.md): how the game is presented and how work is done in this repo.
+- [`agents/`](agents/): the AI players' and the coach's instructions (strategy and kutym).
 
 ## Use of AI
 
