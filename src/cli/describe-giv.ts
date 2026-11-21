@@ -2,14 +2,13 @@
  * A plain-text description of a dealt giv, for `npm run deal` (#46): the roles, each hand
  * grouped by suit, the talong in order and the Färg card.
  */
-import { formatCard, rankValue, SUITS, type Card, type Deal, type Seat } from "../engine/index.js";
+import { formatCard, formatRank, formatSuit, rankValue, SUITS, type Card, type Deal, type Seat } from "../engine/index.js";
 
 /** "♣ E K 9  ♥ D 3  ♠ –  ♦ Kn 10 2": one hand grouped by suit, highest rank first. */
 export function handText(cards: readonly Card[]): string {
   return SUITS.map((suit) => {
     const inSuit = cards.filter((card) => card.suit === suit).sort((a, b) => rankValue(b.rank) - rankValue(a.rank));
-    const symbol = formatCard({ suit, rank: "ace" }).slice(0, 1);
-    return `${symbol} ${inSuit.length === 0 ? "–" : inSuit.map((card) => formatCard(card).slice(1)).join(" ")}`;
+    return `${formatSuit(suit)} ${inSuit.length === 0 ? "–" : inSuit.map((card) => formatRank(card.rank)).join(" ")}`;
   }).join("  ");
 }
 
@@ -23,10 +22,9 @@ function roleOf(seat: Seat, deal: Deal): string {
 
 export function describeGiv(deal: Deal): string[] {
   const { roles, colours } = deal;
-  const symbol = (suit: Card["suit"]) => formatCard({ suit, rank: "ace" }).slice(0, 1);
   const lines = [
     `${roles.playerCount} players, given in seat ${roles.dealer}, pack seed ${deal.seed}`,
-    `Färg: ${formatCard(colours.colourCard)}  →  hf ${symbol(colours.topSuit)}, af ${symbol(colours.secondSuit)}, of ${colours.offSuits.map(symbol).join(" ")}`,
+    `Färg: ${formatCard(colours.colourCard)}  →  hf ${formatSuit(colours.topSuit)}, af ${formatSuit(colours.secondSuit)}, of ${colours.offSuits.map(formatSuit).join(" ")}`,
     "",
   ];
   for (let seat = 0; seat < roles.playerCount; seat++) {

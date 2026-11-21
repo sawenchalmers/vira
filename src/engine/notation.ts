@@ -25,6 +25,14 @@ const ALIAS_LIST = SUITS.flatMap((suit) => SUIT_ALIASES[suit].map((alias) => ({ 
   (a, b) => b.alias.length - a.alias.length,
 );
 
+export function formatSuit(suit: Suit): string {
+  return SUIT_SYMBOLS[suit];
+}
+
+export function formatRank(rank: Rank): string {
+  return RANK_LETTERS[rank];
+}
+
 export function formatCard(card: Card): string {
   return SUIT_SYMBOLS[card.suit] + RANK_LETTERS[card.rank];
 }
