@@ -105,6 +105,16 @@ can know at the table**.
   to `main`; it only accepts pull requests.
 - **Commits:** Conventional Commits with a scope, imperative and lowercase
   (`feat(engine): deal the talong in order`).
+- **Reviewing a change before committing:**
+  1. **The handover:** the assistant stops with the change uncommitted and gives a short
+     list of the changed files, as links to the changed places, plus test steps where the
+     change affects behaviour. No pasted diffs, and no explanations unless asked.
+  2. **The review:** in VS Code's Source Control panel, clicking a changed file opens the
+     red/green diff against the last commit, shown inline
+     (`"diffEditor.renderSideBySide": false`).
+  3. **The test:** following the given steps.
+  4. **The go-ahead:** the developer says when to commit, and whether the assistant may
+     choose the split. Fixes from the independent review go through the same loop.
 - **Every pull request bumps the version** (`npm version patch --no-git-tag-version`, or
   minor for features), in a `chore(release): bump version to X.Y.Z` commit. From #4 on,
   CI checks it.
