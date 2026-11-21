@@ -15,3 +15,7 @@ desktop.ini
 # Logs & temp
 *.log
 tmp/
+
+# Local source material, not public (#5)
+docs/hvad är wira.rtf
+docs/2023isberg.jpg
