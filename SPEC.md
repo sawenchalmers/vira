@@ -15,7 +15,11 @@ The Swedish terms (in italics) are the ones used at the table (#42); the code us
 English names in the last column. The terms hold for any number of players (*spel på tre*,
 *fyra* or *fem*); the rest of this spec describes *spel på fyra*. Contract names (*Begär*,
 *Turné*, *Vingel*, *Tringel*, *Gask*, *Solo*, *Hope Solo*, *Köpmisär*, *tRupp*/*tVupp*/*tTupp*,
-*Gökägg*, *Gökunge*, *Muntergök*, *Vira*) are names, not translated.
+*Gökägg*, *Gökunge*, *Muntergök*, *Vira*) are names, not translated. So are the *Bättre*
+forms *Trumfgask* and *Trumfsolo* (*Gask* / *Solo* + `upgrade`) and *Misärgask* (*Bättre
+Minusgask*). The *Begär* family (*Begärspel*) is written *Sexspel* (= *Begär*), *Sjuspel*,
+*Åttaspel*, *Niospel*, *Tiospel* in game text and prompts, and *6-spel* … *10-spel* in
+tables and the protocol.
 
 **Table and roles**
 
@@ -24,7 +28,7 @@ English names in the last column. The terms hold for any number of players (*spe
 | *parti* | a session of *givar*, scored together | `Match` |
 | *giv* | a deal; *given* is also the dealer (= EH) | `Deal`, `Dealer` |
 | *rond* | one *giv* per player, so everyone has dealt once | `Round` |
-| *förhand* (FH), *mellanhand* (MH), *efterhand* (EH) | the three active seats in a *giv*, *medsols* after *given*; EH is *given* | `forehand`, `middlehand`, `rearhand` |
+| *förhand* (FH), *mellanhand* (MH), *efterhand* (EH) | the three active seats in a *giv*, *medsols* after *given*; EH is *given*. In each *stick* the same words also name the first, second and third to play | `forehand`, `middlehand`, `rearhand` |
 | *vilande* | a player who sits out the *giv*: none at *spel på tre*, the player right of *given* at *spel på fyra*, both players next to *given* at *spel på fem* | `restingSeats` |
 | *medsols* | clockwise | `clockwise` |
 | *lomber* | the player whose bid became the *slutbud* | `declarer` |
@@ -32,44 +36,67 @@ English names in the last column. The terms hold for any number of players (*spe
 | *talong* | the 13 cards not dealt, top card first | `talon` |
 | *givkort*, *givhand* | the cards dealt to a player | `dealtCards`, `dealtHand` |
 
+**Cards**
+
+| Term | Meaning | Code |
+|---|---|---|
+| *Ess* (E), *Kung* (K), *Dam* (D), *Knekt* (Kn), *Tia* (10) … *Tvåa* (2) | the ranks, highest first | `Rank`: `ace`, `king`, `queen`, `jack`, `10` … `2` |
+| *klöver* ♣, *hjärter* ♥, *spader* ♠, *ruter* ♦ | the suits | `Suit`: `clubs`, `hearts`, `spades`, `diamonds` |
+
+The code uses the English values; the game text, the coach and the AI players' prompts show
+the Swedish letters and suit symbols (E K D Kn 10 … 2, ♣ ♥ ♠ ♦).
+
 **Färg and trumf**
 
 | Term | Meaning | Code |
 |---|---|---|
 | *Färg* | the card MH lays, which sets the colours for the *giv* | `colourCard` |
+| *Färgerna* | *Högsta* and *Andra Färg* together | `colourSuits` |
+| *i Färg*, *i Högsta Färg* | a bid restricted to trump in *Färgerna* / in *Högsta Färg* | `inColour`, `inTopColour` |
+| *färga* | to make a bid *i Färg* (a *Bättre* bid) | `upgrade` |
+| *färg* | a suit, as in *bekänna färg* | `Suit` |
 | *Högsta Färg* (hf) | the *Färg* card's suit | `topSuit` |
 | *Andra Färg* (af, "f") | the other suit of the same colour | `secondSuit` |
 | *Ofärg* (of) | the two suits of the other colour | `offSuits` |
 | *trumf*, *Trumfspel* | trump; a game with a trump suit | `trump`, `trumpContract` |
 | *misär* | a game where *lomber* must avoid tricks | `misereContract` |
-| *Petite* / *Grande* / *Falsk* / *Ouverte* / *Royale* | *misär* variants: play with 12 / 13 cards; one trick allowed; hand face up; hand face up before the *köp* | `petite`, `grande`, `falseMisere`, `ouverte`, `royale` |
+| *sluten* | a *misär* played with *lomber*'s hand hidden | `closed` |
+| *Petite* / *Grande* / *Falsk* / *Ouverte* (*öppen*) / *Royale* | *misär* variants: play with 12 / 13 cards; one trick allowed; hand face up; hand face up before the *köp* | `petite`, `grande`, `falseMisere`, `ouverte`, `royale` |
 
 **Bidding**
 
 | Term | Meaning | Code |
 |---|---|---|
-| *Isberget* | the bid ladder (§3) | `ladder` |
-| *nivå*, π / Π | a level on the ladder and its points | `level`, `levelPoints` |
+| *budgivning* | the bidding | `biddingPhase` |
+| *öppningsbud* | FH's first bid | `openingBid` |
+| *budtabell* (colloquially *Isberget*) | the bidding table (§3) | `biddingTable` |
+| *nivå*, π | a level in the *budtabell* and its points | `level`, `levelPoints` |
 | *havsytan* | the line between 8p and 12p | `seaLevel` |
-| *bud*, *slutbud* | a bid; the last bid, which *lomber* plays | `bid`, `contract` |
-| *Bättre* | an improved bid on the same level (*i Färg*, *i Högsta Färg*, *Trumfgask* …) | `improve` |
+| *bud*, *slutbud* | a bid (any contract in the *budtabell*); the last bid, which *lomber* plays | `contract`, `finalContract` |
+| *pass* | to pass, and so leave the *budgivning* | `pass` |
+| *ta större*, *höja* | *lomber* taking the *slutbud* larger within its type, before the *köp* | `raiseContract` |
+| *Bättre* | an already-said bid on the same level that restricts the choice of trump or *misär*: *Trumfgask* / *Trumfsolo*, *i Färg*, *i Högsta Färg*; at *Minusgask*, *Misärgask* (§4) | `upgrade` |
 | *Värre*, *i förhand* | taking over an already-said bid unchanged (FH, or MH from EH) | `takeOver` |
-| *avpassning* | the end of the bidding: two passes | `passOut` |
+| *avpassning*, *dubbelpass* | the end of the bidding: two passes | `passOut` |
 | *avpassningskonvention* (AK) | what a passer is expected to hold | `passingConvention` |
-| *Första* / *Andra hand* (1a / 2a pass) | the first / second player to pass | `firstPasser`, `secondPasser` |
-| *tjuvpass* | a pass that doesn't meet the AK | `unsoundPass` |
-| *böter* | the bet a *tjuvpasser* pays when the bid is played home (§4.1) | `penalty` |
+| *Första* / *Andra hand* (1a / 2a pass) | the first / second player to pass; at a *Gök*, only passes on the *Gök* bid itself count (§4.1) | `firstPasser`, `secondPasser` |
+| *tjuvpass*, *tjuvpassare* | a pass that doesn't meet the AK; the player who makes it | `unsoundPass`, `unsoundPasser` |
+| *kravbud* | a bid whose AK can cost *böter*: the three smallest *Gask* and every *Gök* | `penalisedPassBid` |
+| *lurpass* | passing on strength, to trap *lomber* | `trapPass` |
+| *böter* | the bet a *tjuvpassare* pays when the bid is played home (§4.1) | `penalty` |
 | *håll*, *dubbelhåll* | a stopper; a double stopper (§3.1) | `stopper`, `doubleStopper` |
-| *låggard* (*äkta gard*), *halvgard* (*antydan*) | a protected low card; half of one (§3.1) | `lowGuard`, `halfGuard` |
+| *låggard* (*gard*, *äkta gard*), *halvgard* (*antydan*) | a protected low card; half of one (§3.1) | `lowGuard`, `halfGuard` |
 | *jämn hand* | no singleton and no suit of 6 or more cards | `evenHand` |
 | *sonika*, *renons* | a singleton; a void | `singleton`, `voidSuit` |
+| *andra*, *tredje* | a card with one / two lower cards in its suit (*Kung-andra*, *Dam-tredje*) | `doubleton`, `tripleton` |
+| *handkort* | the cards in a player's hand | `handCards` |
 
 **Köp**
 
 | Term | Meaning | Code |
 |---|---|---|
-| *köp* | exchanging cards with the *talong* | `buy` |
-| *Omköp* | *lomber* buying again for one bet (*Omturné*, *Omvingel* …) | `rebuy` |
+| *köp* | exchanging cards with the *talong* | `buy`, `buyPhase` |
+| *Omköp* (*Omturné*, *Omvingel*, *Omtringel*) | *lomber* buying again for one bet; the game text uses the name that fits the contract | `rebuy` |
 | *kasta*, *kastkort* | to give up cards in the *köp*; those cards | `discard`, `discardedCards` |
 | *uppslag* | the *talong* cards turned face up (*Turné*, *Vingel*, *Tupp*) | `turnUpCards` |
 | *nerslag* | the *Minusgask*'s top *talong* card, laid face down | `setAsideCard` |
@@ -80,12 +107,20 @@ English names in the last column. The terms hold for any number of players (*spe
 
 | Term | Meaning | Code |
 |---|---|---|
+| *Spelning* | the play, after the *köp* | `playPhase` |
 | *stick* | a trick (*spel* can also mean a trick) | `trick` |
 | *utspel* | the lead | `lead` |
+| *bekänna färg* | to follow suit | `followSuit` |
+| *sticka* | to play the highest card so far in the trick | `beat` |
+| *stjäla* | to play a trump when another suit is led | `ruff` |
 | *ta*, *vinna* (*ett stick*) | to win a trick | `takeTrick`, `trickWinner`, `tricksTaken` |
 | *förlora* (*ett stick*) | to lose a trick: another player takes it | `loseTrick`, `tricksLost` |
-| *saka*, *sakning* | to play a card of a suit that is neither led nor *trumf*; that card | `sluff` |
-| *maska* | to *saka* although you could have trumped | `declineToRuff` |
+| *saka*, *sakning* | to play a card of a suit that is neither led nor *trumf*; that card | `sluff`, `sluffCard` |
+| *maska* | to *saka* although you could have *stulit* | `declineToRuff` |
+| *vinnare* | a card that will take a trick | `winningCards` |
+| *trumfsits* | how the remaining trumps are split between the defenders | `trumpSplit` |
+| *gaffel* | the defenders hold e.g. E D around *lomber*'s K Kn, so *lomber* can't lead the suit without losing both | `tenace` |
+| *osättbar* | a *misär* suit or hand that can't be beaten | `unbeatable` |
 | *lägga upp* | to claim the rest of the tricks by showing your cards (also: playing with the hand face up) | `claim` |
 
 **Results and payment**
@@ -93,18 +128,20 @@ English names in the last column. The terms hold for any number of players (*spe
 | Term | Meaning | Code |
 |---|---|---|
 | *hemgång* | *lomber* makes the game | `made` |
-| *bet*, *betspel* | *lomber* is one trick short; a game played and lost | `defeated`, `playedDefeat` |
-| *kodilj* | *lomber* is two or more tricks short | `doubleDefeat` |
-| *Pinnar*, P | the payment from the game's price (§6) | `pins`, `gamePrice` |
-| *Modpinnar*, *Fegpinnar* | no *Pinnar* after a *betspel*; *Pinnar* paid after a *lagt spel* | `couragePins`, `cowardPins` |
-| *Betar*, *bet* | the stake: 36p for the player who lifts or puts in the bet, shared equally by the others (18p each at *spel på tre*, 12p at *fyra*, 9p at *fem*) | `bets`, `bet` |
+| *bet*, *betspel* | *lomber* is one trick short; a game played (not folded) and lost | `defeated` |
+| *kodilj* (*kossa*) | *lomber* is two or more tricks short; the tricks beyond are *kalvar* and aren't counted | `doubleDefeated` |
+| *Pinnar*, Π (P) | the payment from the game's price, Π = π (+ μ above *havsytan*) (§3, §6) | `pins`, `gamePrice` |
+| *Modpinnar*, *Fegpinnar* | no *Pinnar* after a *betspel*; in *Minusgask* a *betspel* pays *Pinnar* instead (*Fegpinnar*) | `couragePins`, `cowardPins` |
+| *Betar*, *bet* | the stake: 36p for the player who lifts or puts in the bet, shared equally by the others (18p each at *spel på tre*, 12p at *fyra*, 9p at *fem*) | `stakes`, `stake` |
 | *pulla* | the box the bets are put in | `potBox` |
 | *pott* | the bets in the *pulla* | `pot` |
-| *ål* | every player putting one bet in the *pulla*: at the start of a *parti*, and whenever the *pott* drops below three bets | `ante` |
+| *lyfta*, *sätta* (*en bet*) | to take a bet from / put one in the *pulla* | `liftStake`, `putStake` |
+| *ål*, *åltur* | every player putting one bet in the *pulla*: at the start of a *parti*, and whenever the *pott* drops below three bets | `ante` |
 | μ | the extra points above *havsytan* (§3) | `mu` |
 | *Jackpott* | lifting the whole *pott* (§3) | `jackpot` |
-| *protokoll*, *Ställning* | the score sheet; the running totals | `scoresheet`, `standings` |
-| *kutym* | the table's established way of playing, not a rule; the AI players follow it (CLAUDE.md) | `tablePractice` |
+| *protokoll*, *Ställning* | the score sheet; the running totals in the *protokoll*, and the tricks so far (*lomber* – *försvaret*) in the trick table | `scoresheet`, `standings`, `trickCount` |
+| *medspelare* | a defender's fellow defender | `partner` |
+| *kutym* | the table's established way of playing, not a rule; the AI players follow it (`agents/player.md`) | `tablePractice` |
 
 ---
 
@@ -130,16 +167,16 @@ English names in the last column. The terms hold for any number of players (*spe
 - Payment factor by trump suit: of ×1, af ×2, hf ×4. Misär ×3. Hope Solo and Royale are
   paid as ofärg.
 
-## 3. Isberget – bid ladder (transcribed from the user's photo)
+## 3. The budtabell (Isberget), transcribed from the user's photo
 
-Level Π (in p). "AK" = avpassningskonvention code for passing on that bid.
+Level π (in p). "AK" = avpassningskonvention code for passing on that bid.
 
-| Π | Trumf (Begär family etc.) | Gask | Solo | Other |
+| π | Trumf (Begär family etc.) | Gask | Solo | Other |
 |---|---|---|---|---|
 | −1 | | Minusgask (AK hahalj; 6 stick / PF) | | |
 | 0 | 6-spel = Begär (4h) | Gask på 0 (haja; 7 / GF) | | Gökägg (1a pass lala, 2a pass l; G) |
 | 1 | Vingel 6 (3d), Turné 6 (3h), 7-spel (3f) | Gask på 1 (haj; 8 / P) | | tRupp (4a) |
-| 4/3 | | | | Gökunge (1a lal, 2a l) |
+| 4/3 | | | | Gökunge (1a lal, 2a l; G) |
 | 2 | Vingel 7 (2dh), Turné 7 (2h), 8-spel (2of) | Gask på 2 (ha; 9 / G) | Solo 6 | Köp 4 (2a; PF), tVupp (3a; P) |
 | 3 | Vingel 8 (d2h), Turné 8 (h), 9-spel (2h) | Gask på 3 (ha; 10 / PO) | Solo Petite HS6 / Falsk Misär | Muntergök (1a LL, 2a L; GO) |
 | 4 | Tringel 9 (3h) | Gask på 4 (ha; 11 / GO) | Solo 7 | Köp 3 (a; GF), tTupp (2a; P) |
@@ -168,11 +205,15 @@ Notes from the table:
   whenever the pott drops below three bets, every player puts one bet in the pulla.
   (#27, after 1.0.)
 - Vingel is paid double, Tringel triple.
-- Modpinnar at betspel; Fegpinnar at lagt spel (applies at/below level 0).
+- Modpinnar at betspel; in Minusgask a betspel pays Pinnar instead (Fegpinnar).
 
 AK abbreviations: h = håll, d = dubbelhåll, f = håll of which 2 in the Färger, of = håll in
 Ofärger, a = antydan (halvgard; "2a" can be replaced by a låggard), l = låggard (äkta
 gard), j = jämn hand.
+In the Gök cells, "1a" / "2a" name the passer the requirement applies to: Första hand (the
+first to pass) and Andra hand (the second). Elsewhere "2a" means two antydan. Capital
+letters (Muntergök's LL, L) mark a mandatory requirement. Misär types: G = Grande,
+P = Petite, F = Falsk, O = Ouverte.
 
 ### 3.1 Håll, garder, jämn hand
 - A **håll** in a suit = you end up holding the top remaining card if others draw the suit
@@ -214,7 +255,7 @@ gard), j = jämn hand.
 - A pass not meeting the AK is a **Tjuvpass**. Böter apply only when:
   - a **Gök** is played home and the passer did not meet the Gök AK, or
   - a **Gask below Gask på 2** is played home and the passer did not have jämn hand.
-- **Böter = one whole bet** that the tjuvpasser puts in the pulla: −36p for the tjuvpasser,
+- **Böter = one whole bet** that the tjuvpassare puts in the pulla: −36p for the tjuvpassare,
   +12p to each of the other three players (each tjuvpass is its own protocol row).
 
 ## 5. Contracts and köp mechanics
@@ -223,7 +264,7 @@ Begärspel and Solo: tricks needed = the number in the name (Begär = 6-spel).
 
 - **Begär / N-spel:** lomber names trump (free, or restricted by "i Färg"/"i Högsta Färg")
   **before** the köp; discards any number (0–13) and draws as many **blind from the top**.
-  Then Omköp option (see below), then lay/play. Defence then buys (§5.1).
+  Then Omköp option (see below), then fold or play. Defence then buys (§5.1).
 - **Turné N:** top talong card is turned up; its suit is trump; it must be bought (counts as
   one of the drawn cards).
 - **Vingel N:** top two cards turned up; trump is chosen among their suits; both must be
@@ -244,21 +285,21 @@ Begärspel and Solo: tricks needed = the number in the name (Begär = 6-spel).
 - **Köp N (Köpmisär):** lomber buys at least N cards blind from the top (discarding as many).
   Köp 4 = Petite Falsk: after the köp discard one more card and play with 12; one trick
   allowed. The defence may then buy, or not, as they wish (the AI defenders follow the
-  misär kutym in CLAUDE.md).
-- **Solo:** lomber does not buy and **cannot lay**; names trump before the defence köp.
-- **tRupp / tVupp / tTupp, Tringel, Hope Solo, Ouvert/Royale misärer:** not used in play yet
+  misär kutym in `agents/player.md`).
+- **Solo:** lomber does not buy and **cannot fold**; names trump before the defence köp.
+- **tRupp / tVupp / tTupp, Tringel, Hope Solo, Ouverte/Royale misärer:** not used in play yet
   – implement from the rtf in a later phase.
 
 **Omköp:** after a köp, lomber may pay one bet (36p: −36 lomber, +12 to each other player)
 and buy again; may be **repeated** while enough talong remains. Offer it after each köp.
 
-**Lay (lägga spelet):** allowed after the köp (not in Solo).
+**Fold (lägga spelet):** allowed after the köp (not in Solo).
 
 ### 5.1 Defence köp
 - In buying order medsols from lomber, skipping the resting player: **förste försvarare**
-  (left of lomber) first, then **andre försvarare**. Defenders may kasta any cards; not
-  kasta aces or trumps is andre försvararens kutym (CLAUDE.md), not a rule.
-- Simulated defenders follow the kutym in CLAUDE.md.
+  first, then **andre försvarare**. Defenders may kasta any cards; not
+  kasta aces or trumps is andre försvararens kutym (`agents/player.md`), not a rule.
+- Simulated defenders follow the kutym in `agents/player.md`.
 
 ## 6. Play, results and payment
 
@@ -271,13 +312,14 @@ and buy again; may be **repeated** while enough talong remains. Offer it after e
 - **Pinnar** = P × factor per defender, where P = Π of the contract (fractions like 4/3 are
   allowed), factor = of ×1, af ×2, hf ×4, misär ×3; Vingel ×2, Tringel ×3.
   - Hemgång: each defender pays Pinnar to lomber.
-  - Betspel (played and lost): **Modpinnar** – no Pinnar are paid.
+  - Betspel (played and lost): **Modpinnar** – no Pinnar are paid. Exception: in Minusgask
+    a betspel pays Pinnar (**Fegpinnar**).
   - Kodilj: lomber pays Pinnar to each defender.
-  - Lagt spel: lomber pays Pinnar to each defender (Fegpinnar below/at level 0).
+  - Lagt spel: lomber pays Pinnar to each defender.
 - **Betar:** one bet = 36p (spel på fyra), split 12p per other player, the resting player
   included.
   - Hemgång: lomber +36, others −12 each.
-  - Bet (played or laid): lomber −36, others +12 each.
+  - Bet (betspel or lagt spel): lomber −36, others +12 each.
   - Kodilj: two bets: lomber −72, others +24 each.
   - Vingel: betar doubled. Tringel: tripled.
 - Every deal must sum to zero.
@@ -296,11 +338,11 @@ engine (code)  ──view(seat)──▶  player agent (subagent)  ──move─
   open cards (Turné/Vingel uppslag, Gökunge open talong and lomber's open cards, rejected
   open talong cards); all played tricks. Never other hands or hidden talong.
 - **Player agent:** gets view + shared instructions (rules summary + strategy from
-  CLAUDE.md); returns **only** a JSON move, e.g. `{"bid":"Sjuspel"}`, `{"pass":true}`,
-  `{"discard":["♣K","♥7"]}`, `{"card":"♠Kn"}`, `{"lay":false}`. Illegal → engine re-asks.
+  `agents/player.md`); returns **only** a JSON move, e.g. `{"bid":"Sjuspel"}`, `{"pass":true}`,
+  `{"discard":["♣K","♥7"]}`, `{"card":"♠Kn"}`, `{"fold":false}`. Illegal → engine re-asks.
 - **Coach:** gets only the user's view; produces one suggestion per decision.
 
-## 8. Ågren discard signals (house convention, not in the rtf)
+## 8. Ågren sakning signals (house convention, not in the rtf)
 
 Read after a defender's **two** sakningar (see the glossary):
 - Two different suits, first <7 then higher → weakness in both, strength in the third side
@@ -328,25 +370,25 @@ Betarna        –24          72         –24         –24
 Ställning      –24          76         –26         –26
 ```
 
-Result prefixes: `h` hemgång, `bet`, `kodilj`, `la` (laid). Append `(omköp)` when Omköp
-occurred.
+Result prefixes: `h` hemgång, `b` bet, `ko` kodilj, `l` lagt spel, with one `m` added per
+Omköp (e.g. `hm`, `bmm`).
 
 ## 10. Build order
 
 1. Cards, deal, roles, Färg, rotation, protocol output.
-2. Trick play + results + payment for Begär/N-spel (with köp, Omköp, lay, defence köp).
-3. Bidding ladder with higher-bid rules, Bättre/Värre, taking larger.
+2. Trick play + results + payment for Begär/N-spel (with köp, Omköp, fold, defence köp).
+3. Budtabell with higher-bid rules, Bättre/Värre, taking larger.
 4. Solo; Turné; Vingel.
 5. Gask (−1, 0, n).
 6. Gök (Ägg, Unge, Munter) and Köpmisär; AK checks and böter.
-7. Player agents + coach; then the rest of the ladder (Tringel, Hope Solo, ouvert/royale,
+7. Player agents + coach; then the rest of the budtabell (Tringel, Hope Solo, Ouverte/Royale,
    tRupp/tVupp/tTupp, Vira, havsytan/μ, jackpot).
 
 ## 11. Test cases (payment arithmetic – all verified in play)
 
-Spel på fyra, betar 36p. Order: lomber, defender 1, defender 2, resting.
+Spel på fyra, betar 36p. Order: lomber, förste försvarare, andre försvarare, vilande.
 
-| Case | Lomber | Def 1 | Def 2 | Resting |
+| Case | Lomber | Förste försvarare | Andre försvarare | Vilande |
 |---|---|---|---|---|
 | Begär (Π0) hemgång | +36 | −12 | −12 | −12 |
 | Begär betspel | −36 | +12 | +12 | +12 |
@@ -355,11 +397,11 @@ Spel på fyra, betar 36p. Order: lomber, defender 1, defender 2, resting.
 | Sjuspel of kodilj | −74 | +25 | +25 | +24 |
 | 8-spel f (Π2) hemgång | +44 | −16 | −16 | −12 |
 | Vingel 6 of hemgång | +76 | −26 | −26 | −24 |
-| Vingel 6 af laid | −80 | +28 | +28 | +24 |
+| Vingel 6 af lagt spel | −80 | +28 | +28 | +24 |
 | Solo 7 of (Π4) hemgång | +44 | −16 | −16 | −12 |
 | Solo 8 of (Π8) hemgång | +52 | −20 | −20 | −12 |
 | Turné 6 hf hemgång after one Omköp | +8 | −4 | −4 | 0 |
-| Gökunge (Π4/3, misär ×3) hemgång, Def 1 tjuvpassed (böter) | +56 | −52 | −4 | 0 |
+| Gökunge (Π4/3, misär ×3) hemgång, förste försvarare tjuvpassed (böter) | +56 | −52 | −4 | 0 |
 | Köp 4 betspel | −36 | +12 | +12 | +12 |
 
 Full-deal regression test (Gökunge, user = lomber, hemgång with 0 tricks):
@@ -372,4 +414,4 @@ Full-deal regression test (Gökunge, user = lomber, hemgång with 0 tricks):
   Andersson Begär i Högsta Färg, Toivo Gökunge, Andersson Pass (tjuvpass → böter).
 - Köp: Toivo takes ♠E K 7 4 3, ♥4, ♦3 (open); discards ♣K D 10 9, ♥E D, ♦9.
   Playing hand: ♣3 ♥4 2 ♠E K D 7 6 4 3 2 ♦4 3 – unbeatable with correct play
-  (discard ♣3 at the first opportunity).
+  (saka ♣3 at the first opportunity).
