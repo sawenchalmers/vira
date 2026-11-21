@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
-  activeSeats, coloursFrom, createRng, dealCards, dealFromPack, formatCard, newPack, parseCard, rolesFor, suitFactor,
+  activeSeats, coloursFrom, cutPack, dealCards, deriveSeed, dealFromPack, formatCard, newPack, parseCard, rolesFor, suitFactor,
 } from "../../src/engine/index.js";
 
 describe("dealing a giv", () => {
-  const deal = dealCards(0, 4, createRng(2026));
+  const deal = dealCards(0, 4, 2026, 2027);
 
   it("gives 13 cards each to FH, MH and EH and 13 to the talong", () => {
     for (const seat of activeSeats(deal.roles)) expect(deal.dealtHands[seat]).toHaveLength(13);
@@ -20,10 +20,31 @@ describe("dealing a giv", () => {
   });
 
   it("is the same for the same seed and different for another", () => {
-    const again = dealCards(0, 4, createRng(2026));
-    expect(JSON.parse(JSON.stringify(again))).toEqual(JSON.parse(JSON.stringify(deal)));
-    expect(again).toEqual(deal);
-    expect(dealCards(0, 4, createRng(2027)).talon).not.toEqual(deal.talon);
+    expect(dealCards(0, 4, 2026, 2027)).toEqual(deal);
+    expect(dealCards(0, 4, 2028, 2027)).not.toEqual(deal);
+    expect([deal.seed, deal.nextSeed]).toEqual([2026, 2027]);
+  });
+
+  it("is plain data that survives JSON unchanged", () => {
+    expect(JSON.parse(JSON.stringify(deal))).toEqual(deal);
+  });
+
+  it.each([3, 5] as const)("deals to the three active seats only, with %i players", (count) => {
+    const other = dealCards(0, count, 7, 8);
+    for (const seat of activeSeats(other.roles)) expect(other.dealtHands[seat]).toHaveLength(13);
+    for (const seat of other.roles.restingSeats) expect(other.dealtHands[seat]).toBeUndefined();
+    expect(other.talon).toHaveLength(13);
+  });
+
+  it("takes the Färg card from the bottom of the next giv's pack, before that pack is cut", () => {
+    for (let parti = 0; parti < 50; parti++) {
+      const [s0, s1, s2] = [0, 1, 2].map((giv) => deriveSeed(parti, giv)) as [number, number, number];
+      const colourCard = dealCards(0, 4, s0, s1).colours.colourCard;
+      const next = dealCards(1, 4, s1, s2);
+      const nextCards = [...Object.values(next.dealtHands).flatMap((hand) => hand ?? []), ...next.talon].map(formatCard);
+      expect(nextCards).toContain(formatCard(colourCard)); // dealt in the next giv …
+      expect(formatCard(next.talon.at(-1) ?? colourCard) === formatCard(colourCard)).toBe(false); // … but the cut moved it from the bottom
+    }
   });
 
   it("sets the colours from a Färg card", () => {
@@ -50,6 +71,18 @@ describe("the order of dealing", () => {
   it("leaves the last 13 cards as the talong, top card first", () => {
     expect(positions(talon)).toEqual(range(39, 13));
   });
+
+  it("cuts by putting the lifted top cards underneath", () => {
+    const cut = cutPack(pack, 5);
+    expect(positions(cut)).toEqual([...range(5, 47), ...range(0, 5)]);
+    expect(() => cutPack(pack, 0)).toThrow();
+    expect(() => cutPack(pack, 52)).toThrow();
+  });
+
+  it("only deals a full pack", () => {
+    expect(() => dealFromPack(pack.slice(1), roles)).toThrow();
+    expect(() => dealFromPack([...pack, pack[0] as never], roles)).toThrow();
+  });
 });
 
 describe("Färg", () => {
@@ -58,6 +91,15 @@ describe("Färg", () => {
     expect(colours.topSuit).toBe("diamonds");
     expect(colours.secondSuit).toBe("hearts");
     expect([...colours.offSuits].sort()).toEqual(["clubs", "spades"]);
+  });
+
+  it.each([
+    ["♣9", "clubs", "spades", ["diamonds", "hearts"]],
+    ["♥K", "hearts", "diamonds", ["clubs", "spades"]],
+    ["♠2", "spades", "clubs", ["diamonds", "hearts"]],
+  ])("%s gives hf %s and af %s", (card, top, second, off) => {
+    const colours = coloursFrom(parseCard(card));
+    expect([colours.topSuit, colours.secondSuit, [...colours.offSuits].sort()]).toEqual([top, second, off]);
   });
 
   it("pays Ofärg ×1, Andra Färg ×2, Högsta Färg ×4", () => {

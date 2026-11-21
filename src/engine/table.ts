@@ -11,6 +11,7 @@ export type Seat = number;
 
 /** The roles in one giv. EH is given, the dealer. */
 export interface Roles {
+  readonly playerCount: PlayerCount;
   readonly dealer: Seat;
   readonly forehand: Seat;
   readonly middlehand: Seat;
@@ -24,6 +25,9 @@ export function leftOf(seat: Seat, playerCount: PlayerCount, steps = 1): Seat {
 }
 
 export function rolesFor(dealer: Seat, playerCount: PlayerCount): Roles {
+  if (!Number.isInteger(dealer) || dealer < 0 || dealer >= playerCount) {
+    throw new Error(`No seat ${dealer} at a table of ${playerCount}`);
+  }
   const right = leftOf(dealer, playerCount, -1);
   const left = leftOf(dealer, playerCount, 1);
   const restingSeats = playerCount === 3 ? [] : playerCount === 4 ? [right] : [left, right];
@@ -34,7 +38,7 @@ export function rolesFor(dealer: Seat, playerCount: PlayerCount): Roles {
   }
   const [forehand, middlehand] = active;
   if (forehand === undefined || middlehand === undefined) throw new Error("A giv needs three active seats");
-  return { dealer, forehand, middlehand, restingSeats };
+  return { playerCount, dealer, forehand, middlehand, restingSeats };
 }
 
 /** The three active seats in order: FH, MH and EH (given). The order of dealing and bidding. */

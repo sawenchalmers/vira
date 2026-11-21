@@ -30,6 +30,8 @@ export function sameCard(a: Card, b: Card): boolean {
   return a.suit === b.suit && a.rank === b.rank;
 }
 
+export const PACK_SIZE = SUITS.length * RANKS.length;
+
 /** A full pack of 52 cards in a fixed order (by suit, then rank, highest first). */
 export function newPack(): Card[] {
   return SUITS.flatMap((suit) => RANKS.map((rank) => ({ suit, rank })));

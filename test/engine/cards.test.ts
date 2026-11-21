@@ -51,11 +51,12 @@ describe("notation", () => {
     ["r7", { suit: "diamonds", rank: "7" }],
     ["RU K", { suit: "diamonds", rank: "king" }],
     ["♠ kn", { suit: "spades", rank: "jack" }],
+    ["♠️Kn", { suit: "spades", rank: "jack" }], // the emoji form of ♠
   ] as const)("accepts the alias %j", (text, card) => {
     expect(parseCard(text)).toEqual(card);
   });
 
-  it.each(["", "♠", "Kn", "♠A", "♠1", "♠Knx", "kl", "x7", "spa"])("rejects %j", (text) => {
+  it.each(["", "♠", "Kn", "♠A", "♠1", "♠Knx", "kl", "x7", "spa", "kn", "♣1 0", "s p d"])("rejects %j", (text) => {
     expect(() => parseCard(text)).toThrow();
   });
 });

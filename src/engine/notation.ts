@@ -30,14 +30,16 @@ export function formatCard(card: Card): string {
 }
 
 /**
- * Parses a card: the suit (symbol or alias) followed by the rank, in any case and with spaces
- * allowed, e.g. "♠Kn", "skn", "Sp D", "k10". Throws on anything else.
+ * Parses a card: the suit (symbol or alias) followed by the rank, in any case, with spaces
+ * allowed only between suit and rank, e.g. "♠Kn", "skn", "Sp D", "k10". The emoji form of a
+ * suit symbol ("♠️") is accepted too. Throws on anything else.
  */
 export function parseCard(text: string): Card {
-  const input = text.replace(/\s+/g, "").toLowerCase();
+  const input = text.replace(/\uFE0F/g, "").trim().toLowerCase();
   for (const { alias, suit } of ALIAS_LIST) {
     if (!input.startsWith(alias)) continue;
-    const rest = input.slice(alias.length);
+    const rest = input.slice(alias.length).trimStart();
+    if (/\s/.test(rest)) continue;
     const rank = RANKS.find((r) => RANK_LETTERS[r].toLowerCase() === rest);
     if (rank !== undefined) return { suit, rank };
   }
