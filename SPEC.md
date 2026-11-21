@@ -44,7 +44,10 @@ tables and the protocol.
 | *klöver* ♣, *hjärter* ♥, *spader* ♠, *ruter* ♦ | the suits | `Suit`: `clubs`, `hearts`, `spades`, `diamonds` |
 
 The code uses the English values; the game text, the coach and the AI players' prompts show
-the Swedish letters and suit symbols (E K D Kn 10 … 2, ♣ ♥ ♠ ♦).
+the Swedish letters and suit symbols (E K D Kn 10 … 2, ♣ ♥ ♠ ♦). The card notation (suit
+symbol + rank, e.g. "♠Kn") is the fixed exchange format for moves and prompts, whatever
+language a player sees. Display and input are localisable and belong to the message module
+(#25); input accepts the suit aliases *k*/*kl*, *h*/*hj*, *s*/*sp*, *r*/*ru*, in any case.
 
 **Färg and trumf**
 
@@ -153,8 +156,9 @@ the Swedish letters and suit symbols (E K D Kn 10 … 2, ♣ ♥ ♠ ♦).
   given, **MH** (mellanhand) = left of FH. The player **right of given rests** (vilar) and
   gets no cards.
 - The next given is the player left of the current one. A **rond** = four givar (everyone deals once).
-- Deal: FH, MH, EH get 13 cards each; the remaining 13 form the **talong** (ordered; top
-  card first).
+- Deal: given deals medsols to FH, MH and EH, first 4 cards each, then 3 each until 13
+  cards remain, so each gets 13. The remaining 13 form the **talong** (ordered; top card
+  first).
 - **Bidding starts with FH. First lead in play is by EH** (always EH, not lomber).
 - Play order is medsols, skipping the resting player.
 
