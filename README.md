@@ -16,6 +16,23 @@ and the work plan in [#2](https://github.com/sawenchalmers/vira/issues/2).
 - **1.0:** play in the terminal.
 - **2.0:** a visual web interface on the same engine.
 
+## Development
+
+TypeScript on Node 24, in one package:
+
+- `src/engine/`: the rules engine. Pure and deterministic; it must not import
+  `src/agents/` or `src/cli/`, call the Claude API, or do I/O. ESLint enforces this.
+- `src/agents/`: the AI players and the coach.
+- `src/cli/`: the terminal interface.
+
+```sh
+npm install
+npm test           # Vitest
+npm run lint       # ESLint
+npm run typecheck  # tsc --noEmit
+npm run build      # compile to dist/
+```
+
 ## Documents
 
 - [`SPEC.md`](SPEC.md): the rules engine and agent architecture specification.
