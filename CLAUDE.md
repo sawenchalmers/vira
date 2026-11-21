@@ -37,7 +37,7 @@ can know at the table**.
 ## How the user wants the game presented (coach / orchestrator)
 
 In vira these rules are built into the CLI (and later the web interface), the game loop in
-`src/game/` and the coach's instructions; when Claude is asked to run a game in a chat, they
+`src/game/` (to be added in #25) and the coach's instructions; when Claude is asked to run a game in a chat, they
 apply to Claude directly.
 
 - Language with the user: **Swedish** for game play (card names E K D Kn 10 … 2,
@@ -81,11 +81,12 @@ apply to Claude directly.
 ## Decisions (2026-11-21, see issue #1)
 
 - **TypeScript throughout**, in one package: `src/engine/` (pure rules), `src/game/` (the
-  orchestrator), `src/agents/` (AI players and coach), `src/cli/`. The engine imports
-  nothing from the others (enforced by lint), and `src/game/` doesn't import `src/cli/`
-  (its lint rule comes with the folder, #25).
-- **The orchestrator is code, not an agent** (#25): the game loop in `src/game/` asks the
-  engine who is to act and passes that seat's view to its controller, an AI player or a
+  orchestrator, to be added in #25), `src/agents/` (AI players and coach), `src/cli/`. The
+  engine imports nothing from the others, and `src/game/` doesn't import `src/cli/`. Lint
+  enforces the engine's boundary with `src/agents/` and `src/cli/` now; the rules for
+  `src/game/` come with the folder (#25).
+- **The orchestrator is code, not an agent** (#25): the game loop in `src/game/` will ask the
+  engine who is to act and pass that seat's view to its controller, an AI player or a
   human through a small `ask`/`show` interface that the CLI implements. No seat is special,
   so 2.0 and 3.0 reuse the loop.
 - **1.0 is played in the terminal (CLI).** 2.0 adds a Vite web interface on the same engine
