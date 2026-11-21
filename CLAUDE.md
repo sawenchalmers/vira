@@ -63,19 +63,20 @@ apply to Claude directly.
   often** than a naive bot would – outbid a bit more often instead of passing without
   meeting the AK. Avoid a stream of easy hemgångar.
 - Lomber should consider **laying** after the köp when hemgång looks unlikely.
-- Köp in trumpspel: generally keep only trumps plus side-suit aces (lomber and defenders).
-- Defence köp kutym (trumpspel): vänster buys all if it holds ≥3 trumps, trump K singleton
-  or trump D doubleton, otherwise nothing; höger buys as much as possible but never discards
+- Köp in Trumfspel: generally keep only trumps plus side-suit aces (lomber and defenders).
+- Defence köp kutym (Trumfspel): förste försvarare buys all if it holds ≥3 trumps, trump K
+  singleton or trump D doubleton, otherwise nothing; andre försvarare buys as much as
+  possible but never kastar
   aces or trumps.
-- Defence köp against misär (e.g. Köpmisär): the main goal is a **renons**, so sell
-  (discard) all cards in the shortest suit. But don't sell promising low cards such as a 2
+- Defence köp against misär (e.g. Köpmisär): the main goal is a **renons**, so kasta
+  all cards in the shortest suit. But don't kasta promising low cards such as a 2
   or a 3. With a singleton 2 or 3, it is fine to buy deeper to protect it.
 - Defence köp against Trumfsolo: aim to get the whole talong bought. First buyer discards
   9–10 if possible; if that would mean discarding trumps or aces, buy only 3–4 instead.
 - Defence play:
   - Don't lead trumps as defender unless lomber is close to running out of trumps.
   - When partner leads an honour and lomber plays last, take with the side ace rather than
-    ducking; take side aces early in trumpspel.
+    ducking; take side aces early in Trumfspel.
   - Don't ruff a trick partner is already winning with the highest remaining card.
   - Don't ruff unnecessarily when partner, playing after you, may win the trick.
   - Remember that partner's honour may sit "andra" (doubleton) and fall.
