@@ -82,6 +82,7 @@ can know at the table**.
   (#28).
 - **AI players and the coach are single Claude API calls** (Anthropic TypeScript SDK) that
   return a JSON move or one suggestion, validated against a schema; no agent framework.
+  Where SPEC.md §7 says "subagent", read it as one API call per decision.
 - **Contracts are data, not code per family.** A contract is a record of parameters (goal,
   trump source, exchange, visibility, constraints, what's allowed, payment, AK) and the
   Isberget ladder is a table of records; the engine runs one pipeline and builds each
@@ -91,7 +92,8 @@ can know at the table**.
 
 - Rules engine: plain, deterministic, fully unit-tested code. No LLM calls inside it.
 - Every deal's payments must sum to zero – assert this.
-- Prefer small, reviewable steps. Build the core subset first (SPEC.md §10).
+- Prefer small, reviewable steps. Build in the order of the workstreams in #1 and the work
+  plan in #2 (contracts as data, #30), not the per-family order in SPEC.md §10.
 
 ## Working method (as in sawenchalmers/heath.js)
 
@@ -104,7 +106,8 @@ can know at the table**.
 - **Commits:** Conventional Commits with a scope, imperative and lowercase
   (`feat(engine): deal the talong in order`).
 - **Every pull request bumps the version** (`npm version patch --no-git-tag-version`, or
-  minor for features), in a `chore(release): bump version to X.Y.Z` commit. CI checks it.
+  minor for features), in a `chore(release): bump version to X.Y.Z` commit. From #4 on,
+  CI checks it.
 - **Pull request body:** a note that it was written with Claude (AI) and checked by
   sawenchalmers; `Closes #N`; then **Contents**, **Testing** (tests run, an independent
   review and its fixes, checks to do after the merge) and **Later** (follow-ups as issues).

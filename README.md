@@ -3,10 +3,10 @@
 A simulator for **Isbergsvira** (Nivåvira), a Swedish trick-taking card game for four at
 the table: three play each deal and one rests, bidding on a ladder called **Isberget**.
 
-You play one seat. The other three seats are AI players, and a coach suggests one move at
-each of your decisions. No AI player or coach ever knows more than its seat could know at
-the table: the full game state lives only in a deterministic rules engine, and each player
-sees only its own view.
+The plan: you play one seat, the other three seats are AI players, and a coach suggests one
+move at each of your decisions. The design keeps every AI player and the coach from knowing
+more than their seat could know at the table: the full game state will live only in a
+deterministic rules engine, and each player will see only its own view.
 
 ## Status
 
