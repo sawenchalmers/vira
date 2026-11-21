@@ -1,6 +1,6 @@
 {
   "name": "vira",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "A simulator for Isbergsvira, a Swedish trick-taking card game, with AI players and a coach",
   "license": "UNLICENSED",
