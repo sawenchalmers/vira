@@ -44,7 +44,10 @@ tables and the protocol.
 | *klöver* ♣, *hjärter* ♥, *spader* ♠, *ruter* ♦ | the suits | `Suit`: `clubs`, `hearts`, `spades`, `diamonds` |
 
 The code uses the English values; the game text, the coach and the AI players' prompts show
-the Swedish letters and suit symbols (E K D Kn 10 … 2, ♣ ♥ ♠ ♦).
+the Swedish letters and suit symbols (E K D Kn 10 … 2, ♣ ♥ ♠ ♦). The card notation (suit
+symbol + rank, e.g. "♠Kn") is the fixed exchange format for moves and prompts, whatever
+language a player sees. Display and input are localisable and belong to the message module
+(#25); input accepts the suit aliases *k*/*kl*, *h*/*hj*, *s*/*sp*, *r*/*ru*, in any case.
 
 **Färg and trumf**
 
@@ -153,15 +156,20 @@ the Swedish letters and suit symbols (E K D Kn 10 … 2, ♣ ♥ ♠ ♦).
   given, **MH** (mellanhand) = left of FH. The player **right of given rests** (vilar) and
   gets no cards.
 - The next given is the player left of the current one. A **rond** = four givar (everyone deals once).
-- Deal: FH, MH, EH get 13 cards each; the remaining 13 form the **talong** (ordered; top
-  card first).
+- Deal: the player right of given first cuts the pack (*kuperar*, "lyfter ut sig"): lifts a
+  random number of cards, at least one, off the top and puts them underneath. Given then
+  deals medsols to FH, MH and EH, first 4 cards each, then 3 each until 13 cards remain, so
+  each gets 13. The remaining 13 form the **talong** (ordered; top card
+  first).
 - **Bidding starts with FH. First lead in play is by EH** (always EH, not lomber).
 - Play order is medsols, skipping the resting player.
 
 ## 2. Färg (trump colours)
 
-- MH "lays Färg": the bottom card of the previous deal's pack (simulate: a random card
-  from a fresh shuffled pack).
+- MH "lays Färg": MH shuffles the pack just used (*blandar in sig*) and lays it face down
+  between MH and FH with its bottom card showing. That pack lies ready and is dealt in the
+  **next** giv; its bottom card, the Färg card, sets this giv's colours. The cut before the
+  next deal moves the Färg card anywhere in the pack except the bottom.
 - Its suit = **Högsta Färg (hf)**. The other suit of the same colour = **Andra Färg (af,
   "f")**. The two other suits = **Ofärg (of)**.
 - Payment factor by trump suit: of ×1, af ×2, hf ×4. Misär ×3. Hope Solo and Royale are
