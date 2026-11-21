@@ -43,8 +43,8 @@ Level Π (in p). "AK" = avpassningskonvention code for passing on that bid.
 | 2 | Vingel 7 (2dh), Turné 7 (2h), 8-spel (2of) | Gask på 2 (ha; 9 / G) | Solo 6 | Köp 4 (2a; PF), tVupp (3a; P) |
 | 3 | Vingel 8 (d2h), Turné 8 (h), 9-spel (2h) | Gask på 3 (ha; 10 / PO) | Solo Petite HS6 / Falsk Misär | Muntergök (1a LL, 2a L; GO) |
 | 4 | Tringel 9 (3h) | Gask på 4 (ha; 11 / GO) | Solo 7 | Köp 3 (a; GF), tTupp (2a; P) |
-| 6 | 10-spel | Gask på 6 **[UNCERTAIN: row reading]** | Solo Grande HS7 / Falsk Misär | Köp 2 (P) |
-| 8 | | Gask på 5 **[UNCERTAIN: row reading]** | Solo 8 | Köp 1 (G) |
+| 6 | 10-spel | Gask på 6 (12) | Solo Grande HS7 / Falsk Misär | Köp 2 (P) |
+| 8 | | Gask på 5 (12) | Solo 8 | Köp 1 (G) |
 | — | *havsytan* (sea level) | | | |
 | 12 | | VIRA | Solo HS8 / Petite Misär | |
 | 16 | | | Solo 9 | |
@@ -59,9 +59,13 @@ Level Π (in p). "AK" = avpassningskonvention code for passing on that bid.
 | 384 | | | Solo Grande HS13 / Mis. Ouv. Royale | |
 
 Notes from the table:
-- Above havsytan: Π = π + μ "between the players" **[UNCERTAIN: exact meaning of μ –
-  check the rtf]**. Below havsytan Π = π.
-- Π ≥ 144p: hemgång gives Jackpott **[UNCERTAIN: mechanics – check the rtf]**.
+- Above havsytan: Π = π + μ, paid between the players (the Pinnar). **μ** = the whole-number
+  part of π for the **highest opposing bid** in the bidding, and only when the game is
+  played at 12p or higher (otherwise μ = 0). Example: Solo Grande Misär (24p) after an
+  opponent's 10-spel (6p) gives Π = 30p. Below havsytan Π = π.
+- **Jackpott:** when the game's price P is at least 144p, hemgång lets lomber lift **every
+  bet in the pot** instead of one. This needs the pot: at the start of a parti, and whenever
+  the pot drops below three bets, every player puts in one bet (ål). (#27, after 1.0.)
 - Vingel is paid double, Tringel triple.
 - Modpinnar at spelat bet; Fegpinnar at lagt spel (applies at/below level 0).
 
@@ -76,8 +80,9 @@ låggard), j = jämn hand.
   separately). "4h" = håll in all four suits.
 - **Läggard** (äkta låggard): low card protected enough to duck (e.g. a 2; a 4 with a lower
   card; a 6 with two lower …). Only one låggard counts per suit.
-- **Jämn hand** – house rule: a givhand **without a singleton** (the rtf also excludes
-  6-card suits; the user's group no longer does).
+- **Jämn hand:** a givhand **without a singleton and without a suit of 6 or more cards**,
+  as on the Isberget photo (the user's rule). Voids are allowed. (The rtf text checks only
+  singletons.)
 
 ## 4. Bidding
 
@@ -91,7 +96,9 @@ låggard), j = jämn hand.
   2. any **unsaid** bid on the same level as the last bid, or
   3. an already-said bid on the current level, **improved** (Bättre):
      "i Färg" (trump restricted to hf/af) → "i Högsta Färg" (trump = hf). For Gask:
-     Bättre Gask (Trumfgask) / Bättre Minusgask (Misärgask) **[check rtf]**.
+     at the Minusgask level, **Bättre Gask = Misärgask**; at levels 0–4, **Bättre Gask =
+     Trumfgask**, and Bättre can be said three times there (Trumfgask → i Färg → i Högsta).
+     Without Bättre, lomber chooses trump or misär after the köp.
 - **Never färga a bid whose base version hasn't been said** – the unsaid base bid is already
   higher on that level.
 - **Värre (i förhand):** FH may take over any already-said bid unchanged ("X i förhand");
@@ -106,8 +113,8 @@ låggard), j = jämn hand.
 - A pass not meeting the AK is a **Tjuvpass**. Böter apply only when:
   - a **Gök** is played home and the passer did not meet the Gök AK, or
   - a **Gask below Gask på 2** is played home and the passer did not have jämn hand.
-- **Böter = one whole bet (36p)** paid by the tjuvpasser, distributed 12p to each of the
-  other three players **[UNCERTAIN: confirm recipients with rtf]**.
+- **Böter = one whole bet** that the tjuvpasser puts in the pot: −36p for the tjuvpasser,
+  +12p to each of the other three players (each tjuvpass is its own protocol row).
 
 ## 5. Contracts and köp mechanics
 
@@ -120,10 +127,11 @@ Begärspel and Solo: tricks needed = the number in the name (Begär = 6-spel).
   one of the drawn cards).
 - **Vingel N:** top two cards turned up; trump is chosen among their suits; both must be
   bought (they count among the drawn cards; may not be discarded). Omvingel needs ≥3 cards
-  left **[UNCERTAIN]**.
+  left (Omturné ≥2, Omtringel ≥4).
 - **Gask på n:** lomber keeps **n** givkort (chosen before seeing the talong), discards the
   rest, takes the **whole talong**, discards down to 13, then chooses **trump** (needs 7+n
-  tricks) or the misär type given in the table. **Minusgask (−1):** the top talong card is
+  tricks, but Gask på 6 and Gask på 5 need 12 and Vira 13) or the misär type given in the
+  table (misär only up to Gask på 4). **Minusgask (−1):** the top talong card is
   turned face down (nerslag), lomber discards the whole hand, takes the other 12, chooses
   the game, then takes the face-down card. **Gask på 0:** no nerslag – whole talong (13).
   No defence köp in Gask.
@@ -134,7 +142,8 @@ Begärspel and Solo: tricks needed = the number in the name (Begär = 6-spel).
   defence köp.
 - **Köp N (Köpmisär):** lomber buys at least N cards blind from the top (discarding as many).
   Köp 4 = Petite Falsk: after the köp discard one more card and play with 12; one trick
-  allowed. Defence then buys **[check rtf for defence köp rules in misär]**.
+  allowed. The defence may then buy, or not, as they wish (the AI defenders follow the
+  misär kutym in CLAUDE.md).
 - **Solo:** lomber does not buy and **cannot lay**; names trump before the defence köp.
 - **tRupp / tVupp / tTupp, Tringel, Hope Solo, Ouvert/Royale misärer:** not used in play yet
   – implement from the rtf in a later phase.
@@ -146,7 +155,8 @@ and buy again; may be **repeated** while enough talong remains. Offer it after e
 
 ### 5.1 Defence köp
 - In buying order medsols from lomber, skipping the resting player: **vänster** first, then
-  **höger**. Defenders may not discard aces or trumps when buying (höger rule).
+  **höger**. Defenders may discard any cards; not discarding aces or trumps is höger's
+  kutym (CLAUDE.md), not a rule.
 - Simulated defenders follow the kutym in CLAUDE.md.
 
 ## 6. Play, results and payment

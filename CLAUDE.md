@@ -67,6 +67,9 @@ apply to Claude directly.
 - Defence köp kutym (trumpspel): vänster buys all if it holds ≥3 trumps, trump K singleton
   or trump D doubleton, otherwise nothing; höger buys as much as possible but never discards
   aces or trumps.
+- Defence köp against misär (e.g. Köpmisär): the main goal is a **renons**, so sell
+  (discard) all cards in the shortest suit. But don't sell promising low cards such as a 2
+  or a 3. With a singleton 2 or 3, it is fine to buy deeper to protect it.
 - Defence köp against Trumfsolo: aim to get the whole talong bought. First buyer discards
   9–10 if possible; if that would mean discarding trumps or aces, buy only 3–4 instead.
 - Defence play:
