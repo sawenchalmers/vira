@@ -20,8 +20,10 @@ and the work plan in [#2](https://github.com/sawenchalmers/vira/issues/2).
 
 TypeScript on Node 24, in one package:
 
-- `src/engine/`: the rules engine. Pure and deterministic; it must not import
-  `src/agents/` or `src/cli/`, call the Claude API, or do I/O. ESLint enforces this.
+- `src/engine/`: the rules engine. Pure and deterministic: it must not import
+  `src/agents/` or `src/cli/`, the Claude API or any Node built-in, nor use I/O globals,
+  the clock or `Math.random` (randomness is passed in). ESLint enforces this (see
+  `eslint.config.js`); don't name an engine subfolder `agents` or `cli`.
 - `src/agents/`: the AI players and the coach.
 - `src/cli/`: the terminal interface.
 
