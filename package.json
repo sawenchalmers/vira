@@ -1,6 +1,6 @@
 {
   "name": "vira",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "A simulator for Isbergsvira, a Swedish trick-taking card game, with AI players and a coach",
   "license": "UNLICENSED",
@@ -10,6 +10,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "deal": "tsc -p tsconfig.build.json && node dist/cli/deal.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "vitest run"
