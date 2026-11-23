@@ -1,0 +1,187 @@
+import { describe, expect, it } from "vitest";
+import {
+  BIDDING_TABLE, bidById, compareLevels, CONTRACTS, contractById, contractsOf, formatLevel, type Contract,
+} from "../../src/engine/index.js";
+
+describe("the contract records", () => {
+  it("have unique ids", () => {
+    expect(new Set(CONTRACTS.map((c) => c.id)).size).toBe(CONTRACTS.length);
+    expect(new Set(BIDDING_TABLE.map((b) => b.id)).size).toBe(BIDDING_TABLE.length);
+  });
+
+  it("are each reached by exactly one bid, on the same level", () => {
+    for (const contract of CONTRACTS) {
+      const bids = BIDDING_TABLE.filter((bid) => bid.contracts.includes(contract.id));
+      expect(bids, contract.id).toHaveLength(1);
+      expect(compareLevels(bids[0]?.level ?? contract.level, contract.level), contract.id).toBe(0);
+    }
+  });
+
+  it("are plain data", () => {
+    expect(JSON.parse(JSON.stringify(CONTRACTS))).toEqual(CONTRACTS);
+    expect(JSON.parse(JSON.stringify(BIDDING_TABLE))).toEqual(BIDDING_TABLE);
+  });
+
+  it("are consistent: misär has no trumf, a Petite plays 12 cards, a turn-up is bought", () => {
+    for (const c of CONTRACTS) {
+      if (c.goal.kind === "misere") expect(c.trump, c.id).toBe("none");
+      else expect(c.trump, c.id).not.toBe("none");
+      if (c.handSize === 12) expect(c.goal.kind, c.id).toBe("misere");
+      if (c.turnUpCards > 0) expect(c.buy, c.id).toMatchObject({ kind: "blind", min: c.turnUpCards });
+      if (c.payment.factor === "misere") expect(c.goal.kind, c.id).toBe("misere");
+      if (c.handSize === 12) expect(c.discard?.downTo, c.id).toBe(12);
+      if (c.discard?.mayKeepMore) expect(c.goal.kind, c.id).toBe("misere");
+    }
+  });
+});
+
+describe("the budtabell (SPEC.md §3)", () => {
+  it("runs from the lowest level up", () => {
+    for (let i = 1; i < BIDDING_TABLE.length; i++) {
+      const [before, after] = [BIDDING_TABLE[i - 1], BIDDING_TABLE[i]];
+      if (before && after) expect(compareLevels(before.level, after.level)).toBeLessThanOrEqual(0);
+    }
+  });
+
+  it.each([
+    ["gask--1", "−1", "hahalj"], ["begar-6", "0", "4h"], ["gask-0", "0", "haja"],
+    ["vingel-6", "1", "3d"], ["turne-6", "1", "3h"], ["begar-7", "1", "3f"], ["gask-1", "1", "haj"],
+    ["vingel-7", "2", "2dh"], ["turne-7", "2", "2h"], ["begar-8", "2", "2of"], ["gask-2", "2", "ha"], ["kop-4", "2", "2a"],
+    ["vingel-8", "3", "d2h"], ["turne-8", "3", "h"], ["begar-9", "3", "2h"], ["gask-3", "3", "ha"],
+    ["gask-4", "4", "ha"], ["kop-3", "4", "a"],
+  ])("%s is on level %s with AK %s", (id, lvl, ak) => {
+    const bid = bidById(id);
+    expect(formatLevel(bid.level)).toBe(lvl);
+    expect(bid.passingRequirement).toBe(ak);
+  });
+
+  it.each([
+    ["gokagg", "0", "lala", "l"], ["gokunge", "4/3", "lal", "l"], ["muntergok", "3", "LL", "L"],
+  ])("%s is on level %s with AK %s / %s", (id, lvl, first, second) => {
+    const bid = bidById(id);
+    expect(formatLevel(bid.level)).toBe(lvl);
+    expect(bid.passingRequirement).toEqual({ first, second });
+  });
+
+  it.each([
+    ["solo-6", "2"], ["solo-7", "4"], ["solo-8", "8"], ["solo-9", "16"], ["solo-10", "32"],
+    ["solo-11", "64"], ["solo-12", "128"], ["solo-13", "256"], ["begar-10", "6"], ["gask-6", "6"], ["gask-5", "8"],
+    ["kop-2", "6"], ["kop-1", "8"],
+  ])("%s is on level %s", (id, lvl) => {
+    expect(formatLevel(bidById(id).level)).toBe(lvl);
+  });
+});
+
+describe("Gask", () => {
+  it.each([
+    [-1, 6, "PF"], [0, 7, "GF"], [1, 8, "P"], [2, 9, "G"], [3, 10, "PO"], [4, 11, "GO"],
+  ])("Gask på %i: %i tricks in trumf, or misär %s, chosen after the köp", (n, tricks, size) => {
+    const bid = bidById(`gask-${n}`);
+    expect(bid.choice).toBe("afterBuy");
+    const [trumpGame, misereGame] = contractsOf(bid) as [Contract, Contract];
+    expect(trumpGame.goal).toEqual({ kind: "tricks", min: tricks });
+    expect(trumpGame.trump).toBe("afterBuy");
+    expect(misereSize(misereGame)).toBe(size);
+  });
+
+  it("Gask på 6 and Gask på 5 are trumf only, 12 tricks", () => {
+    for (const n of [6, 5]) {
+      const contracts = contractsOf(bidById(`gask-${n}`));
+      expect(contracts).toHaveLength(1);
+      expect(contracts[0]?.goal).toEqual({ kind: "tricks", min: 12 });
+    }
+  });
+
+  it("keeps n givkort and takes the whole talong; Minusgask lays its top card aside", () => {
+    expect(contractById("gask--1-trump").buy).toEqual({ kind: "keepAndTakeTalon", keep: 0, setAside: true });
+    expect(contractById("gask-0-misere").buy).toEqual({ kind: "keepAndTakeTalon", keep: 0, setAside: false });
+    expect(contractById("gask-5-trump").buy).toEqual({ kind: "keepAndTakeTalon", keep: 5, setAside: false });
+  });
+
+  it("kastar down to 13 after choosing trumf; misär may keep more, a Petite goes down to 12", () => {
+    expect(contractById("gask-2-trump").discard).toEqual({ after: "choice", downTo: 13, mayKeepMore: false });
+    expect(contractById("gask-2-misere").discard).toEqual({ after: "choice", downTo: 13, mayKeepMore: true });
+    expect(contractById("gask-1-misere").discard).toEqual({ after: "choice", downTo: 12, mayKeepMore: true });
+  });
+
+  it("has Fegpinnar in Minusgask only, and no defence köp or Omköp", () => {
+    for (const c of CONTRACTS.filter((c) => c.family === "gask")) {
+      expect(c.payment.cowardPins, c.id).toBe(c.id.startsWith("gask--1"));
+      expect(c.allowed.defenceBuy, c.id).toBe(false);
+      expect(c.allowed.rebuy, c.id).toBe(false);
+    }
+  });
+});
+
+describe("the other families", () => {
+  it("Köp 4 and Köp 2 (Petite) may kasta one more card after the last köp; Köp 3 and 1 don't", () => {
+    for (const n of [4, 2]) expect(contractById(`kop-${n}`).discard).toEqual({ after: "buy", downTo: 12, mayKeepMore: true });
+    for (const n of [3, 1]) expect(contractById(`kop-${n}`).discard).toBeNull();
+  });
+
+  it("Gök kastar (at most) 13 after taking the talong", () => {
+    for (const id of ["gokagg", "gokunge", "muntergok"]) {
+      expect(contractById(id).discard).toEqual({ after: "buy", downTo: 13, mayKeepMore: true });
+    }
+  });
+
+  it("a blind köp in a trumf game swaps card for card: nothing to kasta afterwards", () => {
+    for (const id of ["begar-6", "turne-7", "vingel-8"]) expect(contractById(id).discard).toBeNull();
+  });
+
+  it("a Solo Petite misär kastar its 13th card right after the bidding", () => {
+    for (const id of ["solo-misere-pf", "solo-misere-p", "solo-misere-po", "solo-misere-por"]) {
+      expect(contractById(id).discard, id).toEqual({ after: "bidding", downTo: 12, mayKeepMore: true });
+    }
+  });
+
+  it("Köp N: buy at least N cards blind; misär PF, GF, P, G", () => {
+    for (const [n, size] of [[4, "PF"], [3, "GF"], [2, "P"], [1, "G"]] as const) {
+      const c = contractById(`kop-${n}`);
+      expect(c.buy).toEqual({ kind: "blind", min: n, max: 13 });
+      expect(c.allowed.rebuyMinTalon).toBe(n);
+      expect(misereSize(c)).toBe(size);
+    }
+  });
+
+  it("Turné turns up one card, Vingel two and pays double", () => {
+    expect(contractById("turne-7")).toMatchObject({ trump: "turnUp", turnUpCards: 1, payment: { multiplier: 1 } });
+    expect(contractById("vingel-7")).toMatchObject({ trump: "turnUp", turnUpCards: 2, payment: { multiplier: 2 } });
+    expect(contractById("vingel-7").allowed.rebuyMinTalon).toBe(3);
+  });
+
+  it("Gök: pick 13 of 26; Gökunge's talong is open; Muntergök is Ouverte", () => {
+    expect(contractById("gokagg").buy).toEqual({ kind: "pickFromHandAndTalon", openTalon: false });
+    expect(contractById("gokunge").buy).toEqual({ kind: "pickFromHandAndTalon", openTalon: true });
+    expect(misereSize(contractById("gokunge"))).toBe("G");
+    expect(misereSize(contractById("muntergok"))).toBe("GO");
+  });
+
+  it("Solo: no köp for lomber, can't be folded, the defence buys", () => {
+    for (const c of CONTRACTS.filter((c) => c.family === "solo" || c.family === "hopeSolo")) {
+      expect(c.buy, c.id).toEqual({ kind: "none" });
+      expect(c.allowed.fold, c.id).toBe(false);
+      expect(c.allowed.defenceBuy, c.id).toBe(true);
+    }
+  });
+
+  it("a Solo cell with a misär and a Hope Solo lets lomber choose after the bidding", () => {
+    const bid = bidById("solo-level-3");
+    expect(bid.choice).toBe("afterBidding");
+    expect(bid.contracts).toEqual(["solo-misere-pf", "hope-solo-6"]);
+  });
+
+  it("Hope Solo and the Royale misärer are paid as Ofärg and played face up before the köp", () => {
+    for (const id of ["hope-solo-6", "hope-solo-13", "solo-misere-por", "solo-misere-gor"]) {
+      expect(contractById(id), id).toMatchObject({ visibility: "royale", payment: { factor: "offSuit" } });
+    }
+    expect(contractById("solo-misere-go").payment.factor).toBe("misere");
+  });
+});
+
+/** The budtabell's letters for a misär contract: P/G, F, O, R. */
+const misereSize = (c: Contract): string => {
+  if (c.goal.kind !== "misere") return "not misär";
+  return (c.handSize === 12 ? "P" : "G") + (c.goal.tricksAllowed === 1 ? "F" : "")
+    + (c.visibility === "closed" ? "" : "O") + (c.visibility === "royale" ? "R" : "");
+};
