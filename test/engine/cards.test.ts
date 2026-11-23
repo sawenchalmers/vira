@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { colourOf, formatCard, newPack, parseCard, rankValue, sameCard } from "../../src/engine/index.js";
+import { colourOf, formatCard, newPack, parseCard, parseSuit, rankValue, sameCard } from "../../src/engine/index.js";
 
 describe("cards", () => {
   it("has a pack of 52 different cards", () => {
@@ -58,5 +58,17 @@ describe("notation", () => {
 
   it.each(["", "♠", "Kn", "♠A", "♠1", "♠Knx", "kl", "x7", "spa", "kn", "♣1 0", "s p d"])("rejects %j", (text) => {
     expect(() => parseCard(text)).toThrow();
+  });
+});
+
+describe("suit notation", () => {
+  it.each([["♥", "hearts"], ["♥️", "hearts"], ["hj", "hearts"], ["H", "hearts"], [" kl ", "clubs"], ["s", "spades"], ["Ru", "diamonds"]])(
+    "reads %j", (text, suit) => {
+      expect(parseSuit(text)).toBe(suit);
+    },
+  );
+
+  it.each([[""], ["x"], ["hjärter"], ["♥E"]])("rejects %j", (text) => {
+    expect(() => parseSuit(text)).toThrow();
   });
 });

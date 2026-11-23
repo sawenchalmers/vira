@@ -52,11 +52,14 @@ export type ContractPhase =
 export type Phase = BidPhase | ContractPhase;
 
 /**
- * Lomber may raise to any higher bid of the same family in the ruleset's budtabell: Gask på 0 →
- * Gask på 2, Begär → Sjuspel, Solo 7 → any higher Solo cell (trumf, misär or Hope Solo).
+ * The bids lomber may raise to: any higher bid of the same family in the ruleset's budtabell,
+ * Gask på 0 → Gask på 2, Begär → Sjuspel, Solo 7 → any higher Solo cell (trumf, misär or Hope
+ * Solo). In the budtabell's order.
  */
-const canRaise = (b: Bid, ruleset: Ruleset): boolean =>
-  ruleset.biddingTable.some((other) => other.family === b.family && compareLevels(other.level, b.level) > 0);
+export const raiseOptions = (b: Bid, ruleset: Ruleset): Bid[] =>
+  ruleset.biddingTable.filter((other) => other.family === b.family && compareLevels(other.level, b.level) > 0);
+
+const canRaise = (b: Bid, ruleset: Ruleset): boolean => raiseOptions(b, ruleset).length > 0;
 
 /** Which bids use each bid phase, in the order they run. */
 const BID_PHASES: readonly { readonly phase: BidPhase; readonly uses: (b: Bid, ruleset: Ruleset) => boolean }[] = [
