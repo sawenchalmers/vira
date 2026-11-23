@@ -316,7 +316,8 @@ Begärspel and Solo: tricks needed = the number in the name (Begär = 6-spel).
   Ombyte, swaps in at least one turned-up card (bytkort). The first swapped card allows
   kasting two handkort, the second one more, the third none; lomber may kasta fewer. Rejected
   bytkort and kastade cards lie open (the tuppstjärt). Normally Petite. Ombyte: a new uppslag
-  of the same size, a new blind köp from the rest, then at least one swap again; needs one card beyond the uppslag left.
+  of the same size, a new blind köp from the rest, then at least one swap again; needs one
+  card beyond the uppslag left.
   **Höna:** taking the whole uppslag and laying nothing away; plays with 16/15/14 cards (the
   play ends with 3/2/1 left) and is paid double. It happens by itself when the tuppstjärt
   stays empty; lomber doesn't choose or announce it. In the data it is a variant of the Tupp
@@ -324,9 +325,9 @@ Begärspel and Solo: tricks needed = the number in the name (Begär = 6-spel).
 - **In the data, mechanisms later (#27):** Tringel, Vira, the Tupp family (with Höna), Hope Solo
   and the Ouverte/Royale misärer.
 
-**Omköp:** after a köp, lomber may pay one bet (36p: −36 lomber, +12 to each other player)
-and buy again; may be **repeated** while enough talong remains: at least 1 card (Begär),
-N cards (Köp N), 2 (Omturné), 3 (Omvingel), 4 (Omtringel), or one more than the uppslag
+**Omköp:** after a köp of at least one card (a köp of none is final), lomber may pay one
+bet (36p: −36 lomber, +12 to each other player) and buy again, at least one card; may be
+**repeated** while enough talong remains: at least 1 card (Begär), N cards (Köp N), 2 (Omturné), 3 (Omvingel), 4 (Omtringel), or one more than the uppslag
 (Ombyte). Each Omköp costs as many bets as a hemgång gives (×2 for Vingel, ×3 for Tringel).
 Offer it after each köp.
 
