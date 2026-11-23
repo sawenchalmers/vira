@@ -25,6 +25,7 @@ tables and the protocol.
 
 | Term | Meaning | Code |
 |---|---|---|
+| *spel på tre*, *fyra*, *fem* | the table rules for that many players: the *vilande*, the deal, payment factors, the stake, *böter* and the *budtabell* | `Ruleset` (`THREE_PLAYERS`, `FOUR_PLAYERS`, `FIVE_PLAYERS`) |
 | *parti* | a session of *givar*, scored together | `Match` |
 | *giv* | a deal; *given* is also the dealer (= EH) | `Deal`, `Dealer` |
 | *rond* | one *giv* per player, so everyone has dealt once | `Round` |
