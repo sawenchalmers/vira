@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  BIDDING_TABLE, bidById, bidPhases, CONTRACTS, contractById, FOUR_PLAYERS, PHASE_ORDER, phasesFor,
+  BIDDING_TABLE, bidById, bidPhases, CONTRACTS, contractById, FOUR_PLAYERS, PHASE_ORDER, phasesFor, raiseOptions,
 } from "../../src/engine/index.js";
 
 const phases = (id: string) => phasesFor(contractById(id), FOUR_PLAYERS);
@@ -52,6 +52,12 @@ describe("raising (ta större) goes to any higher bid of the same family", () =>
     for (const id of ["begar-10", "tringel-9", "gask-13", "kop-1", "muntergok"]) {
       expect(bidPhases(bidById(id), FOUR_PLAYERS), id).not.toContain("raise");
     }
+  });
+
+  it("lists the higher bids of the family, in the budtabell's order", () => {
+    expect(raiseOptions(bidById("begar-6"), FOUR_PLAYERS).map((b) => b.id)).toEqual(["begar-7", "begar-8", "begar-9", "begar-10"]);
+    expect(raiseOptions(bidById("gask-5"), FOUR_PLAYERS).map((b) => b.id)).toEqual(["gask-13"]);
+    expect(raiseOptions(bidById("kop-1"), FOUR_PLAYERS)).toEqual([]);
   });
 
   it("is read from the ruleset's budtabell", () => {

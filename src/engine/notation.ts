@@ -37,6 +37,14 @@ export const formatCard = (card: Card): string => {
   return SUIT_SYMBOLS[card.suit] + RANK_LETTERS[card.rank];
 };
 
+/** Parses a suit: the symbol (also the emoji form) or an alias, in any case, e.g. "♥", "hj", "H". */
+export const parseSuit = (text: string): Suit => {
+  const input = text.replace(/️/g, "").trim().toLowerCase();
+  const found = ALIAS_LIST.find(({ alias }) => alias === input);
+  if (found === undefined) throw new Error(`Not a suit: "${text}"`);
+  return found.suit;
+};
+
 /**
  * Parses a card: the suit (symbol or alias) followed by the rank, in any case, with spaces
  * allowed only between suit and rank, e.g. "♠Kn", "skn", "Sp D", "k10". The emoji form of a
