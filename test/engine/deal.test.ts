@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
-  activeSeats, coloursFrom, cutPack, dealCards, deriveSeed, dealFromPack, formatCard, newPack, parseCard, rolesFor, suitFactor,
+  activeSeats, coloursFrom, cutPack, dealCards, deriveSeed, dealFromPack, formatCard, newPack, parseCard, rolesFor, rulesetFor,
+  FOUR_PLAYERS, suitFactor,
 } from "../../src/engine/index.js";
 
 describe("dealing a giv", () => {
-  const deal = dealCards(0, 4, 2026, 2027);
+  const deal = dealCards(0, rulesetFor(4), 2026, 2027);
 
   it("gives 13 cards each to FH, MH and EH and 13 to the talong", () => {
     for (const seat of activeSeats(deal.roles)) expect(deal.dealtHands[seat]).toHaveLength(13);
@@ -20,8 +21,8 @@ describe("dealing a giv", () => {
   });
 
   it("is the same for the same seed and different for another", () => {
-    expect(dealCards(0, 4, 2026, 2027)).toEqual(deal);
-    expect(dealCards(0, 4, 2028, 2027)).not.toEqual(deal);
+    expect(dealCards(0, rulesetFor(4), 2026, 2027)).toEqual(deal);
+    expect(dealCards(0, rulesetFor(4), 2028, 2027)).not.toEqual(deal);
     expect([deal.seed, deal.nextSeed]).toEqual([2026, 2027]);
   });
 
@@ -30,7 +31,7 @@ describe("dealing a giv", () => {
   });
 
   it.each([3, 5] as const)("deals to the three active seats only, with %i players", (count) => {
-    const other = dealCards(0, count, 7, 8);
+    const other = dealCards(0, rulesetFor(count), 7, 8);
     for (const seat of activeSeats(other.roles)) expect(other.dealtHands[seat]).toHaveLength(13);
     for (const seat of other.roles.restingSeats) expect(other.dealtHands[seat]).toBeUndefined();
     expect(other.talon).toHaveLength(13);
@@ -39,8 +40,8 @@ describe("dealing a giv", () => {
   it("takes the Färg card from the bottom of the next giv's pack, before that pack is cut", () => {
     for (let parti = 0; parti < 50; parti++) {
       const [s0, s1, s2] = [0, 1, 2].map((giv) => deriveSeed(parti, giv)) as [number, number, number];
-      const colourCard = dealCards(0, 4, s0, s1).colours.colourCard;
-      const next = dealCards(1, 4, s1, s2);
+      const colourCard = dealCards(0, rulesetFor(4), s0, s1).colours.colourCard;
+      const next = dealCards(1, rulesetFor(4), s1, s2);
       const nextCards = [...Object.values(next.dealtHands).flatMap((hand) => hand ?? []), ...next.talon].map(formatCard);
       expect(nextCards).toContain(formatCard(colourCard)); // dealt in the next giv …
       expect(formatCard(next.talon.at(-1) ?? colourCard) === formatCard(colourCard)).toBe(false); // … but the cut moved it from the bottom
@@ -57,8 +58,8 @@ describe("dealing a giv", () => {
 describe("the order of dealing", () => {
   // An unshuffled pack, so each card's position shows where it went.
   const pack = newPack();
-  const roles = rolesFor(0, 4);
-  const { dealtHands, talon } = dealFromPack(pack, roles);
+  const roles = rolesFor(0, rulesetFor(4));
+  const { dealtHands, talon } = dealFromPack(pack, roles, FOUR_PLAYERS);
   const positions = (cards: readonly unknown[] | undefined) => (cards ?? []).map((card) => pack.indexOf(card as never));
   const range = (from: number, count: number) => Array.from({ length: count }, (_, i) => from + i);
 
@@ -80,8 +81,8 @@ describe("the order of dealing", () => {
   });
 
   it("only deals a full pack", () => {
-    expect(() => dealFromPack(pack.slice(1), roles)).toThrow();
-    expect(() => dealFromPack([...pack, pack[0] as never], roles)).toThrow();
+    expect(() => dealFromPack(pack.slice(1), roles, FOUR_PLAYERS)).toThrow();
+    expect(() => dealFromPack([...pack, pack[0] as never], roles, FOUR_PLAYERS)).toThrow();
   });
 });
 
@@ -104,9 +105,9 @@ describe("Färg", () => {
 
   it("pays Ofärg ×1, Andra Färg ×2, Högsta Färg ×4", () => {
     const colours = coloursFrom(parseCard("♠7"));
-    expect(suitFactor("spades", colours)).toBe(4);
-    expect(suitFactor("clubs", colours)).toBe(2);
-    expect(suitFactor("hearts", colours)).toBe(1);
-    expect(suitFactor("diamonds", colours)).toBe(1);
+    expect(suitFactor("spades", colours, FOUR_PLAYERS)).toBe(4);
+    expect(suitFactor("clubs", colours, FOUR_PLAYERS)).toBe(2);
+    expect(suitFactor("hearts", colours, FOUR_PLAYERS)).toBe(1);
+    expect(suitFactor("diamonds", colours, FOUR_PLAYERS)).toBe(1);
   });
 });

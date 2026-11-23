@@ -4,7 +4,8 @@
  */
 import { colourOf, newPack, PACK_SIZE, SUITS, type Card, type Suit } from "./cards.js";
 import { createRng, shuffle } from "./random.js";
-import { activeSeats, rolesFor, type PlayerCount, type Roles, type Seat } from "./table.js";
+import type { Ruleset } from "./ruleset.js";
+import { activeSeats, rolesFor, type Roles, type Seat } from "./table.js";
 
 /** Högsta Färg, Andra Färg and the two Ofärger, set by the Färg card. */
 export interface Colours {
@@ -37,41 +38,32 @@ export const coloursFrom = (colourCard: Card): Colours => {
   return { colourCard, topSuit, secondSuit, offSuits: [offA, offB] };
 };
 
-/**
- * The payment factor for a trumf suit (SPEC.md §2). A table rule: it moves into the ruleset
- * record with the other table rules (#30).
- */
-export const SUIT_FACTORS = { topSuit: 4, secondSuit: 2, offSuit: 1 } as const;
-export type SuitFactor = (typeof SUIT_FACTORS)[keyof typeof SUIT_FACTORS];
-
-export const suitFactor = (trump: Suit, colours: Colours): SuitFactor => {
-  if (trump === colours.topSuit) return SUIT_FACTORS.topSuit;
-  if (trump === colours.secondSuit) return SUIT_FACTORS.secondSuit;
-  return SUIT_FACTORS.offSuit;
+/** The payment factor for a trumf suit, from the ruleset: Högsta Färg, Andra Färg or Ofärg. */
+export const suitFactor = (trump: Suit, colours: Colours, ruleset: Ruleset): number => {
+  const factors = ruleset.paymentFactors;
+  if (trump === colours.topSuit) return factors.topSuit;
+  if (trump === colours.secondSuit) return factors.secondSuit;
+  return factors.offSuit;
 };
 
-/** How the cards are dealt (SPEC.md §1): first this many to each active seat … */
-export const FIRST_PACKET = 4;
-/** … then this many each, round after round, until TALON_SIZE cards remain. */
-export const PACKET = 3;
-export const TALON_SIZE = 13;
-
 /**
- * Deals from a pack, top card first: 4 cards each to FH, MH and EH, then 3 each until 13
- * cards remain, which form the talong (in order, top card first).
+ * Deals from a pack, top card first, as the ruleset says: `firstPacket` cards each to FH, MH
+ * and EH, then `packet` each until `talonSize` cards remain, which form the talong (in order,
+ * top card first). Spel på fyra: 4, then 3 each, until 13 remain.
  */
-export const dealFromPack = (pack: readonly Card[], roles: Roles): Pick<Deal, "dealtHands" | "talon"> => {
+export const dealFromPack = (pack: readonly Card[], roles: Roles, ruleset: Ruleset): Pick<Deal, "dealtHands" | "talon"> => {
+  const { firstPacket, packet: laterPacket, talonSize } = ruleset.deal;
   if (pack.length !== PACK_SIZE) throw new Error(`A pack has ${PACK_SIZE} cards, not ${pack.length}`);
   const order = activeSeats(roles);
   const hands = new Map<Seat, Card[]>(order.map((seat) => [seat, []]));
   let next = 0;
-  let packet = FIRST_PACKET;
-  while (pack.length - next > TALON_SIZE) {
+  let packet = firstPacket;
+  while (pack.length - next > talonSize) {
     for (const seat of order) {
       hands.get(seat)?.push(...pack.slice(next, next + packet));
       next += packet;
     }
-    packet = PACKET;
+    packet = laterPacket;
   }
   return { dealtHands: Object.fromEntries(hands), talon: pack.slice(next) };
 };
@@ -100,9 +92,9 @@ export const preparePack = (seed: number): { readonly shuffled: Card[]; readonly
  * bottom card of the next giv's pack as it lies ready, shuffled but not yet cut (SPEC.md §2).
  * The cut before the next deal moves it anywhere in the pack except the bottom.
  */
-export const dealCards = (dealer: Seat, playerCount: PlayerCount, seed: number, nextSeed: number): Deal => {
-  const roles = rolesFor(dealer, playerCount);
-  const { dealtHands, talon } = dealFromPack(preparePack(seed).cut, roles);
+export const dealCards = (dealer: Seat, ruleset: Ruleset, seed: number, nextSeed: number): Deal => {
+  const roles = rolesFor(dealer, ruleset);
+  const { dealtHands, talon } = dealFromPack(preparePack(seed).cut, roles, ruleset);
   const colourCard = preparePack(nextSeed).shuffled.at(-1);
   if (colourCard === undefined) throw new Error("Empty pack");
   return { seed, nextSeed, roles, dealtHands, talon, colours: coloursFrom(colourCard) };
