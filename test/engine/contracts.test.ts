@@ -29,7 +29,8 @@ describe("the contract records", () => {
       if (c.handSize === 12) expect(c.goal.kind, c.id).toBe("misere");
       if (c.turnUpCards > 0) expect(c.buy, c.id).toMatchObject({ kind: "blind", min: c.turnUpCards });
       if (c.payment.factor === "misere") expect(c.goal.kind, c.id).toBe("misere");
-      if (c.handSize === 12) expect(c.discard?.downTo, c.id).toBe(12);
+      // A Petite gets down to 12 in a discard phase, except a Tupp, which kastar as it swaps.
+      if (c.handSize === 12 && c.buy.kind !== "swap") expect(c.discard?.downTo, c.id).toBe(12);
       if (c.discard?.mayKeepMore) expect(c.goal.kind, c.id).toBe("misere");
     }
   });
@@ -48,7 +49,7 @@ describe("the budtabell (SPEC.md §3)", () => {
     ["vingel-6", "1", "3d"], ["turne-6", "1", "3h"], ["begar-7", "1", "3f"], ["gask-1", "1", "haj"],
     ["vingel-7", "2", "2dh"], ["turne-7", "2", "2h"], ["begar-8", "2", "2of"], ["gask-2", "2", "ha"], ["kop-4", "2", "2a"],
     ["vingel-8", "3", "d2h"], ["turne-8", "3", "h"], ["begar-9", "3", "2h"], ["gask-3", "3", "ha"],
-    ["gask-4", "4", "ha"], ["kop-3", "4", "a"],
+    ["gask-4", "4", "ha"], ["kop-3", "4", "a"], ["tringel-9", "4", "3h"],
   ])("%s is on level %s with AK %s", (id, lvl, ak) => {
     const bid = bidById(id);
     expect(formatLevel(bid.level)).toBe(lvl);
@@ -66,7 +67,7 @@ describe("the budtabell (SPEC.md §3)", () => {
   it.each([
     ["solo-6", "2"], ["solo-7", "4"], ["solo-8", "8"], ["solo-9", "16"], ["solo-10", "32"],
     ["solo-11", "64"], ["solo-12", "128"], ["solo-13", "256"], ["begar-10", "6"], ["gask-6", "6"], ["gask-5", "8"],
-    ["kop-2", "6"], ["kop-1", "8"],
+    ["kop-2", "6"], ["kop-1", "8"], ["gask-13", "12"],
   ])("%s is on level %s", (id, lvl) => {
     expect(formatLevel(bidById(id).level)).toBe(lvl);
   });
@@ -82,6 +83,12 @@ describe("Gask", () => {
     expect(trumpGame.goal).toEqual({ kind: "tricks", min: tricks });
     expect(trumpGame.trump).toBe("afterBuy");
     expect(misereSize(misereGame)).toBe(size);
+  });
+
+  it("Vira is Gask på 13: keep the whole givhand, trumf only, all 13 tricks", () => {
+    const [vira, ...rest] = contractsOf(bidById("gask-13"));
+    expect(rest).toHaveLength(0);
+    expect(vira).toMatchObject({ name: "Vira (trumf)", goal: { kind: "tricks", min: 13 }, buy: { kind: "keepAndTakeTalon", keep: 13 } });
   });
 
   it("Gask på 6 and Gask på 5 are trumf only, 12 tricks", () => {
@@ -148,7 +155,21 @@ describe("the other families", () => {
     expect(contractById("turne-7")).toMatchObject({ trump: "turnUp", turnUpCards: 1, payment: { multiplier: 1 } });
     expect(contractById("vingel-7")).toMatchObject({ trump: "turnUp", turnUpCards: 2, payment: { multiplier: 2 } });
     expect(contractById("vingel-7").allowed.rebuyMinTalon).toBe(3);
+    expect(contractById("tringel-9")).toMatchObject({
+      trump: "turnUp", turnUpCards: 3, goal: { kind: "tricks", min: 9 }, payment: { multiplier: 3 }, allowed: { rebuyMinTalon: 4 },
+    });
   });
+
+  it.each([[3, "tRupp", "1", "4a"], [2, "tVupp", "2", "3a"], [1, "tTupp", "4", "2a"]] as const)(
+    "%i turned up: %s on level %s, AK %s, becomes its Tupp or its Höna after the köp", (n, name, lvl, ak) => {
+      const bid = bidById(`tupp-${n}`);
+      expect([bid.name, formatLevel(bid.level), bid.passingRequirement, bid.choice]).toEqual([name, lvl, ak, "afterBuy"]);
+      const [tupp, hona] = contractsOf(bid) as [Contract, Contract];
+      expect(tupp.buy).toEqual({ kind: "swap", turnUp: n, discardPerSwap: [2, 1, 0] });
+      expect(tupp).toMatchObject({ handSize: 12, goal: { kind: "misere", tricksAllowed: 0 }, payment: { multiplier: 1 } });
+      expect(hona).toMatchObject({ family: "hona", handSize: 13 + n, payment: { factor: "misere", multiplier: 2 } });
+      expect(tupp.allowed).toEqual({ rebuy: true, rebuyMinTalon: n + 1, fold: true, defenceBuy: true });
+    });
 
   it("Gök: pick 13 of 26; Gökunge's talong is open; Muntergök is Ouverte", () => {
     expect(contractById("gokagg").buy).toEqual({ kind: "pickFromHandAndTalon", openTalon: false });

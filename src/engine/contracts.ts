@@ -16,18 +16,26 @@ import { level, type Level } from "./level.js";
  *   the turned-up card must be bought.
  * - vingel: Vingel 6–8. Like Turné with two turned-up cards; lomber chooses trumf between
  *   their suits. Paid double.
- * - gask: Minusgask, Gask på 0 … 6. Lomber keeps n givkort, takes the whole talong, then
- *   chooses trumf (7 + n tricks) or the level's misär. No defence köp.
+ * - tringel: Tringel 9. Like Vingel with three turned-up cards. Paid triple.
+ * - gask: Minusgask, Gask på 0 … 6 and Vira (Gask på 13). Lomber keeps n givkort, takes the
+ *   whole talong, then chooses trumf (7 + n tricks; 12 for Gask på 5 and 6, all 13 for Vira)
+ *   or the level's misär. No defence köp.
  * - kopmisar: Köp 4 … Köp 1. A misär with a blind köp of at least N cards; Köp 4 and 3 allow
  *   one trick (Falsk), Köp 4 and 2 play with 12 cards (Petite).
  * - gok: Gökägg, Gökunge, Muntergök. A misär where lomber keeps 13 of givhand + talong;
  *   Gökunge's talong is open, Muntergök is played Ouverte. No defence köp.
  * - solo: Solo 6 … Solo Vira and the Solo misärer. Lomber doesn't buy and can't fold; the
  *   defence buys. Trumf Solos name trumf; the misärer run from Petite Falsk to Ouverte Royale.
+ * - tupp: tRupp, tVupp, tTupp (Uppslagsmisär). A misär: 3/2/1 talong cards are turned up and
+ *   can't be bought; lomber buys blind from the rest, then swaps in at least one turned-up
+ *   card (bytkort) and may kasta handkort for it. Normally Petite.
+ * - hona: Höna. A Tupp where lomber takes the whole uppslag and lays nothing away: plays with
+ *   16/15/14 cards and is paid double.
  * - hopeSolo: Hope Solo 6–13. A trumf Solo played Ouverte Royale (hand open before the köp,
  *   the defence may consult), paid as Ofärg.
  */
-export type Family = "begar" | "turne" | "vingel" | "gask" | "solo" | "hopeSolo" | "kopmisar" | "gok";
+export type Family =
+  | "begar" | "turne" | "vingel" | "tringel" | "gask" | "solo" | "hopeSolo" | "kopmisar" | "tupp" | "hona" | "gok";
 
 export type Goal =
   | { readonly kind: "tricks"; readonly min: number }
@@ -48,7 +56,14 @@ export type Buy =
   /** Gask: keep n givkort, take the whole talong; Minusgask first lays its top card aside (nerslag). */
   | { readonly kind: "keepAndTakeTalon"; readonly keep: number; readonly setAside: boolean }
   /** Gök: keep 13 of givhand + talong; Gökunge's talong is open and the cards taken from it are played open. */
-  | { readonly kind: "pickFromHandAndTalon"; readonly openTalon: boolean };
+  | { readonly kind: "pickFromHandAndTalon"; readonly openTalon: boolean }
+  /**
+   * Tupp: `turnUp` cards are turned up and can't be bought; lomber buys blind from the rest,
+   * then swaps in at least one turned-up card (bytkort). Each swapped card allows kasting the
+   * next number of handkort in `discardPerSwap` (2, then 1, then 0); lomber may kasta fewer.
+   * Rejected bytkort and the kastade handkort lie open (the tuppstjärt).
+   */
+  | { readonly kind: "swap"; readonly turnUp: number; readonly discardPerSwap: readonly number[] };
 
 /** Lomber's hand: hidden; face up for the play (Ouverte); or face up already before the köp (Royale). */
 export type Visibility = "closed" | "ouverte" | "royale";
@@ -67,7 +82,7 @@ export type PaymentFactor = "bySuit" | "misere" | "offSuit";
  */
 export type Discard = {
   readonly after: "bidding" | "buy" | "choice";
-  readonly downTo: 12 | 13;
+  readonly downTo: number;
   readonly mayKeepMore: boolean;
 } | null;
 
@@ -78,8 +93,8 @@ export interface Contract {
   /** π, the level of the bid that leads to the contract. */
   readonly level: Level;
   readonly goal: Goal;
-  /** 12 for Petite (one extra card is kastad), otherwise 13. */
-  readonly handSize: 12 | 13;
+  /** 12 for Petite (one extra card is kastad), 13 for Grande, more for a Höna (13 + its uppslag). */
+  readonly handSize: number;
   readonly trump: TrumpSource;
   /** Turned up before the köp (TURN_UP_CARDS); they must be bought and can't be kastade. */
   readonly turnUpCards: number;
@@ -115,23 +130,23 @@ const begar = (tricks: number, lvl: Level): Contract => {
   };
 };
 
-/** How many talong cards each turn-up family turns up before the köp (Tringel's 3 come with #27). */
-export const TURN_UP_CARDS = { turne: 1, vingel: 2 } as const;
+/** How many talong cards each turn-up family turns up before the köp. */
+export const TURN_UP_CARDS = { turne: 1, vingel: 2, tringel: 3 } as const;
 export type TurnUpFamily = keyof typeof TURN_UP_CARDS;
 
-/** Families paid more than once (Tringel's ×3 comes with #27). */
-export const PAYMENT_MULTIPLIERS: Partial<Record<Family, number>> = { vingel: 2 };
+/** Families paid more than once; everything else ×1. */
+export const PAYMENT_MULTIPLIERS: Partial<Record<Family, number>> = { vingel: 2, tringel: 3, hona: 2 };
 
-const TURN_UP_NAMES: Record<TurnUpFamily, string> = { turne: "Turné", vingel: "Vingel" };
+const TURN_UP_NAMES: Record<TurnUpFamily, string> = { turne: "Turné", vingel: "Vingel", tringel: "Tringel" };
 
-/** Turné and Vingel: trumf from the turned-up card(s), which count as bought. */
+/** Turné, Vingel and Tringel: trumf from the turned-up card(s), which count as bought. */
 const turnUp = (family: TurnUpFamily, tricks: number, lvl: Level): Contract => {
   const cards = TURN_UP_CARDS[family];
   return {
     id: `${family}-${tricks}`, name: `${TURN_UP_NAMES[family]} ${tricks}`, family, level: lvl,
     goal: { kind: "tricks", min: tricks }, handSize: 13, trump: "turnUp", turnUpCards: cards,
     buy: { kind: "blind", min: cards, max: 13 }, discard: null, visibility: "closed",
-    // A rebuy turns up as many again and needs one more card left: Omturné 2, Omvingel 3 (SPEC.md §5).
+    // A rebuy turns up as many again and needs one more card left: Omturné 2, Omvingel 3, Omtringel 4.
     allowed: { rebuy: true, rebuyMinTalon: cards + 1, fold: true, defenceBuy: true },
     payment: { factor: "bySuit", multiplier: PAYMENT_MULTIPLIERS[family] ?? 1, cowardPins: false },
   };
@@ -151,13 +166,17 @@ const misere = (size: MisereSize, discardAfter: "bidding" | "buy" = "buy"): Pick
   };
 };
 
+/** Vira is Gask på 13: keep the whole givhand, take the whole talong, kasta 13. */
+export const VIRA = 13;
+
 /**
  * Gask på n: two contracts, trumf and misär, between which lomber chooses after the köp (only
  * trumf for Gask på 5 and 6). Keep n givkort, take the whole talong, choose, then kasta.
  */
 const gask = (n: number, lvl: Level, misereSize?: MisereSize): Contract[] => {
-  const tricks = n >= 5 ? 12 : 7 + n; // Gask på 5 and 6 need 12 tricks (SPEC.md §5)
-  const name = n === -1 ? "Minusgask" : `Gask på ${n}`;
+  // Gask på 5 and 6 need 12 tricks, Vira (Gask på 13) all 13 (SPEC.md §5).
+  const tricks = n === VIRA ? 13 : n >= 5 ? 12 : 7 + n;
+  const name = n === -1 ? "Minusgask" : n === VIRA ? "Vira" : `Gask på ${n}`;
   const common = {
     family: "gask" as const, level: lvl, turnUpCards: 0 as const,
     buy: { kind: "keepAndTakeTalon" as const, keep: Math.max(n, 0), setAside: n === -1 },
@@ -185,6 +204,33 @@ const kopmisar = (n: number, lvl: Level, size: MisereSize): Contract => {
     allowed: { rebuy: true, rebuyMinTalon: n, fold: true, defenceBuy: true },
     payment: { factor: "misere", multiplier: 1, cowardPins: false },
   };
+};
+
+/** The Tupp family: how many cards each turns up (SPEC.md §3: tRupp, tVupp, tTupp). */
+export const TUPP_NAMES = { 3: "tRupp", 2: "tVupp", 1: "tTupp" } as const;
+export type TuppSize = keyof typeof TUPP_NAMES;
+
+/** For each swapped bytkort, how many handkort lomber may kasta: 2 for the first, 1, then 0. */
+const DISCARD_PER_SWAP = [2, 1, 0] as const;
+
+/**
+ * Tupp and its Höna (Uppslagsmisär): two contracts, decided by the swap. The Tupp is normally
+ * Petite; taking the whole uppslag without laying anything away makes it a Höna, played with
+ * 13 + n cards (the play ends with n cards left) and paid double. Ombyte needs one card more
+ * than the uppslag left.
+ */
+const tupp = (n: TuppSize, lvl: Level): Contract[] => {
+  const common = {
+    level: lvl, goal: { kind: "misere" as const, tricksAllowed: 0 as const }, trump: "none" as const, turnUpCards: 0,
+    buy: { kind: "swap" as const, turnUp: n, discardPerSwap: DISCARD_PER_SWAP }, discard: null, visibility: "closed" as const,
+    allowed: { rebuy: true, rebuyMinTalon: n + 1, fold: true, defenceBuy: true },
+  };
+  return [
+    { ...common, id: `tupp-${n}`, name: TUPP_NAMES[n], family: "tupp", handSize: 12,
+      payment: { factor: "misere", multiplier: 1, cowardPins: false } },
+    { ...common, id: `hona-${n}`, name: `Höna (${TUPP_NAMES[n]})`, family: "hona", handSize: 13 + n,
+      payment: { factor: "misere", multiplier: PAYMENT_MULTIPLIERS.hona ?? 1, cowardPins: false } },
+  ];
 };
 
 /** Gök: a misär where lomber has givhand + talong and kastar (at most) 13; no defence köp. */
@@ -232,16 +278,18 @@ const hopeSolo = (tricks: number, lvl: Level): Contract => {
 };
 
 /**
- * Every contract in 1.0, plus all Solo contracts (μ is 0 until a later issue, #27). Tringel,
- * Tupp and Vira come with #27.
+ * Every contract in the budtabell. Contracts above havsytan count μ as 0 until #27.
  */
 export const CONTRACTS: readonly Contract[] = [
   begar(6, level(0)), begar(7, level(1)), begar(8, level(2)), begar(9, level(3)), begar(10, level(6)),
   turnUp("turne", 6, level(1)), turnUp("turne", 7, level(2)), turnUp("turne", 8, level(3)),
   turnUp("vingel", 6, level(1)), turnUp("vingel", 7, level(2)), turnUp("vingel", 8, level(3)),
+  turnUp("tringel", 9, level(4)),
   ...gask(-1, level(-1), "PF"), ...gask(0, level(0), "GF"), ...gask(1, level(1), "P"), ...gask(2, level(2), "G"),
   ...gask(3, level(3), "PO"), ...gask(4, level(4), "GO"), ...gask(6, level(6)), ...gask(5, level(8)),
+  ...gask(VIRA, level(12)),
   kopmisar(4, level(2), "PF"), kopmisar(3, level(4), "GF"), kopmisar(2, level(6), "P"), kopmisar(1, level(8), "G"),
+  ...tupp(3, level(1)), ...tupp(2, level(2)), ...tupp(1, level(4)),
   gok("gokagg", "Gökägg", level(0), "G", false),
   gok("gokunge", "Gökunge", level(4, 3), "G", true),
   gok("muntergok", "Muntergök", level(3), "GO", false),
