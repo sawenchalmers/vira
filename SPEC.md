@@ -314,8 +314,10 @@ Begärspel and Solo: tricks needed = the number in the name (Begär = 6-spel).
   bytkort and kastade cards lie open (the tuppstjärt). Normally Petite. Ombyte: a new uppslag
   of the same size, at least one swap again; needs one card beyond the uppslag left.
   **Höna:** taking the whole uppslag and laying nothing away; plays with 16/15/14 cards (the
-  play ends with 3/2/1 left) and is paid double. Höna is its own contract in the data.
-- **In the data, mechanisms later (#27):** Tringel, Vira, the Tupp family and Höna, Hope Solo
+  play ends with 3/2/1 left) and is paid double. It happens by itself when the tuppstjärt
+  stays empty; lomber doesn't choose or announce it. In the data it is a variant of the Tupp
+  contract (its swap's `whenTailEmpty`), not a contract of its own.
+- **In the data, mechanisms later (#27):** Tringel, Vira, the Tupp family (with Höna), Hope Solo
   and the Ouverte/Royale misärer.
 
 **Omköp:** after a köp, lomber may pay one bet (36p: −36 lomber, +12 to each other player)
