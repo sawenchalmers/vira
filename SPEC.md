@@ -282,7 +282,8 @@ Begärspel and Solo: tricks needed = the number in the name (Begär = 6-spel).
   one of the drawn cards).
 - **Vingel N:** top two cards turned up; trump is chosen among their suits; both must be
   bought (they count among the drawn cards; may not be discarded). Omvingel needs ≥3 cards
-  left (Omturné ≥2, Omtringel ≥4).
+  left (Omturné ≥2, Omtringel ≥4). An Omturné, Omvingel or Omtringel turns up the next
+  card(s), which give the new trumf (Omvingel, Omtringel: chosen again among their suits).
 - **Gask på n:** lomber keeps **n** givkort (chosen before seeing the talong), kastar the
   rest and takes the **whole talong**. Lomber then chooses **trump** (needs 7+n tricks, but
   Gask på 6 and Gask på 5 need 12 and Vira 13) or the misär type given in the table (misär
@@ -315,7 +316,7 @@ Begärspel and Solo: tricks needed = the number in the name (Begär = 6-spel).
   Ombyte, swaps in at least one turned-up card (bytkort). The first swapped card allows
   kasting two handkort, the second one more, the third none; lomber may kasta fewer. Rejected
   bytkort and kastade cards lie open (the tuppstjärt). Normally Petite. Ombyte: a new uppslag
-  of the same size, at least one swap again; needs one card beyond the uppslag left.
+  of the same size, a new blind köp from the rest, then at least one swap again; needs one card beyond the uppslag left.
   **Höna:** taking the whole uppslag and laying nothing away; plays with 16/15/14 cards (the
   play ends with 3/2/1 left) and is paid double. It happens by itself when the tuppstjärt
   stays empty; lomber doesn't choose or announce it. In the data it is a variant of the Tupp
