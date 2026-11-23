@@ -99,9 +99,11 @@ language a player sees. Display and input are localisable and belong to the mess
 | Term | Meaning | Code |
 |---|---|---|
 | *köp* | exchanging cards with the *talong* | `buy`, `buyPhase` |
-| *Omköp* (*Omturné*, *Omvingel*, *Omtringel*) | *lomber* buying again for one bet; the game text uses the name that fits the contract | `rebuy` |
+| *Omköp* (*Omturné*, *Omvingel*, *Omtringel*, *Ombyte*) | *lomber* buying again for one bet; the game text uses the name that fits the contract | `rebuy` |
 | *kasta*, *kastkort* | to give up cards in the *köp*; those cards | `discard`, `discardedCards` |
-| *uppslag* | the *talong* cards turned face up (*Turné*, *Vingel*, *Tupp*) | `turnUpCards` |
+| *uppslag* | the *talong* cards turned face up (*Turné*, *Vingel*, *Tringel*, *Tupp*) | `turnUpCards` |
+| *byte*, *bytkort* | in a *Tupp*: swapping turned-up cards into the hand; those cards | `swap`, `swapCards` |
+| *tuppstjärt* | a *Tupp*'s rejected *bytkort* and *kastade* handkort, lying open | `tuppTail` |
 | *nerslag* | the *Minusgask*'s top *talong* card, laid face down | `setAsideCard` |
 | *köphand*, *spelhand* | the hand after the *köp*; the hand *lomber* plays with | `boughtHand`, `playingHand` |
 | *lägga spelet*, *lagt spel* | *lomber* giving up after the *köp*; the result | `fold`, `folded` |
@@ -301,8 +303,20 @@ Begärspel and Solo: tricks needed = the number in the name (Begär = 6-spel).
   choose between them after the bidding (and any *ta större*), before the defence köp. A
   Solo Petite misär kastar its 13th card right after the bidding (Solo has no köp). All
   Solo contracts are in the data; above havsytan μ counts as 0 until #27.
-- **tRupp / tVupp / tTupp, Tringel, Hope Solo, Ouverte/Royale misärer:** not used in play yet
-  – implement from the rtf in a later phase.
+- **Tringel 9:** like Vingel with three turned-up cards (trumf chosen among their suits, all
+  three must be bought); 9 tricks; Omtringel needs ≥4 cards left; paid triple.
+- **Vira (Gask på 13):** lomber keeps the whole givhand, takes the whole talong, kastar 13;
+  trumf only, all 13 tricks.
+- **tRupp / tVupp / tTupp (Uppslagsmisär):** misär. 3/2/1 talong cards are turned up and
+  can't be bought; lomber buys blind from the rest, then, before the defence köp and any
+  Ombyte, swaps in at least one turned-up card (bytkort). The first swapped card allows
+  kasting two handkort, the second one more, the third none; lomber may kasta fewer. Rejected
+  bytkort and kastade cards lie open (the tuppstjärt). Normally Petite. Ombyte: a new uppslag
+  of the same size, at least one swap again; needs one card beyond the uppslag left.
+  **Höna:** taking the whole uppslag and laying nothing away; plays with 16/15/14 cards (the
+  play ends with 3/2/1 left) and is paid double. Höna is its own contract in the data.
+- **In the data, mechanisms later (#27):** Tringel, Vira, the Tupp family and Höna, Hope Solo
+  and the Ouverte/Royale misärer.
 
 **Omköp:** after a köp, lomber may pay one bet (36p: −36 lomber, +12 to each other player)
 and buy again; may be **repeated** while enough talong remains. Offer it after each köp.
