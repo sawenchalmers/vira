@@ -42,27 +42,33 @@ export type Goal =
   | { readonly kind: "misere"; readonly tricksAllowed: 0 | 1 };
 
 /**
- * Where trump comes from: named by lomber before the köp, the turned-up card(s), chosen after
- * the köp (Gask), or none (misär).
+ * Where trumf comes from: `named` by lomber (Begär before the köp, Solo before the defence köp);
+ * the suit of the one turned-up card (`turnUp`, Turné); `chooseFromTurnUp`, lomber chooses among
+ * the turned-up suits before the köp (Vingel, Tringel); chosen `afterBuy` (Gask); or `none` (misär).
  */
-export type TrumpSource = "beforeBuy" | "turnUp" | "afterBuy" | "none";
+export type TrumpSource = "named" | "turnUp" | "chooseFromTurnUp" | "afterBuy" | "none";
 
 export type Buy =
   /** Solo: lomber doesn't buy. */
   | { readonly kind: "none" }
   /** Blind from the top, between min and max cards (the turned-up cards count). */
   | { readonly kind: "blind"; readonly min: number; readonly max: number }
-  /** Gask: keep n givkort, take the whole talong; Minusgask first lays its top card aside (nerslag). */
-  | { readonly kind: "keepAndTakeTalon"; readonly keep: number; readonly setAside: boolean }
+  /** Gask: keep n givkort and take the whole talong (Minusgask: what is left after its nerslag). */
+  | { readonly kind: "keepAndTakeTalon"; readonly keep: number }
   /** Gök: keep 13 of givhand + talong; Gökunge's talong is open and the cards taken from it are played open. */
   | { readonly kind: "pickFromHandAndTalon"; readonly openTalon: boolean };
 
 /**
- * Talong cards turned face up before the köp. Turné, Vingel and Tringel: they `must` be bought
- * (they count among the drawn cards, can't be kastade, and trumf comes from them). Tupp: they
- * are `never` bought, only swapped in after the köp (bytkort).
+ * Talong cards laid out before the köp. Turné, Vingel and Tringel: turned up; they `must` be
+ * bought (they count among the drawn cards, can't be kastade, and trumf comes from them). Tupp:
+ * turned up; `never` bought, only swapped in after the köp (bytkort). Minusgask: its nerslag, the
+ * top talong card laid aside face down, taken by lomber only `afterChoice` of the game.
  */
-export type TurnUp = { readonly cards: number; readonly bought: "must" | "never" } | null;
+export type TurnUp = {
+  readonly cards: number;
+  readonly bought: "must" | "never" | "afterChoice";
+  readonly faceDown: boolean;
+} | null;
 
 /**
  * The swap phase (Tupp), after the köp and before the defence köp and any Ombyte: lomber swaps
@@ -108,7 +114,10 @@ export interface Contract {
   /** π, the level of the bid that leads to the contract. */
   readonly level: Level;
   readonly goal: Goal;
-  /** 12 for Petite (one extra card is kastad), 13 for Grande. A Höna's hand size is in its swap. */
+  /**
+   * 12 for Petite (one extra card is kastad), 13 for Grande. In misär lomber may keep more (see
+   * discard and swap), so for a Tupp this is the nominal Petite size; a Höna's is in its swap.
+   */
   readonly handSize: number;
   readonly trump: TrumpSource;
   readonly turnUp: TurnUp;
@@ -125,7 +134,10 @@ export interface Contract {
   };
   readonly payment: {
     readonly factor: PaymentFactor;
-    /** Vingel ×2 (PAYMENT_MULTIPLIERS); everything else ×1. */
+    /**
+     * Vingel ×2, Tringel ×3 (PAYMENT_MULTIPLIERS), everything else ×1; a Höna's is in its swap.
+     * It multiplies both the Pinnar and the Betar (SPEC.md §6).
+     */
     readonly multiplier: number;
     /** Minusgask: a betspel pays Pinnar (Fegpinnar) instead of Modpinnar. */
     readonly cowardPins: boolean;
@@ -138,7 +150,7 @@ const NO_REBUY = { rebuy: false, rebuyMinTalon: 0 } as const;
 const begar = (tricks: number, lvl: Level): Contract => {
   return {
     id: `begar-${tricks}`, name: tricks === 6 ? "Begär" : `${tricks}-spel`, family: "begar", level: lvl,
-    goal: { kind: "tricks", min: tricks }, handSize: 13, trump: "beforeBuy", turnUp: null, swap: null,
+    goal: { kind: "tricks", min: tricks }, handSize: 13, trump: "named", turnUp: null, swap: null,
     buy: { kind: "blind", min: 0, max: 13 }, discard: null, visibility: "closed",
     allowed: { rebuy: true, rebuyMinTalon: 1, fold: true, defenceBuy: true },
     payment: { factor: "bySuit", multiplier: 1, cowardPins: false },
@@ -154,12 +166,16 @@ export const PAYMENT_MULTIPLIERS: Partial<Record<Family, number>> = { vingel: 2,
 
 const TURN_UP_NAMES: Record<TurnUpFamily, string> = { turne: "Turné", vingel: "Vingel", tringel: "Tringel" };
 
-/** Turné, Vingel and Tringel: trumf from the turned-up card(s), which count as bought. */
+/**
+ * Turné, Vingel and Tringel: trumf from the turned-up card(s), which count as bought. With one
+ * card (Turné) its suit is trumf; with more, lomber chooses among their suits before the köp.
+ */
 const turnUp = (family: TurnUpFamily, tricks: number, lvl: Level): Contract => {
   const cards = TURN_UP_CARDS[family];
   return {
     id: `${family}-${tricks}`, name: `${TURN_UP_NAMES[family]} ${tricks}`, family, level: lvl,
-    goal: { kind: "tricks", min: tricks }, handSize: 13, trump: "turnUp", turnUp: { cards, bought: "must" }, swap: null,
+    goal: { kind: "tricks", min: tricks }, handSize: 13, trump: cards === 1 ? "turnUp" : "chooseFromTurnUp",
+    turnUp: { cards, bought: "must", faceDown: false }, swap: null,
     buy: { kind: "blind", min: cards, max: 13 }, discard: null, visibility: "closed",
     // A rebuy turns up as many again and needs one more card left: Omturné 2, Omvingel 3, Omtringel 4.
     allowed: { rebuy: true, rebuyMinTalon: cards + 1, fold: true, defenceBuy: true },
@@ -184,6 +200,12 @@ const misere = (size: MisereSize, discardAfter: "bidding" | "buy" = "buy"): Pick
 /** Vira is Gask på 13: keep the whole givhand, take the whole talong, kasta 13. */
 export const VIRA = 13;
 
+/** Minusgask is Gask på −1. */
+export const MINUSGASK = -1;
+
+/** The name of Gask på n, shared by its bid and contracts. */
+export const gaskName = (n: number): string => (n === MINUSGASK ? "Minusgask" : n === VIRA ? "Vira" : `Gask på ${n}`);
+
 /**
  * Gask på n: two contracts, trumf and misär, between which lomber chooses after the köp (only
  * trumf for Gask på 5 and 6). Keep n givkort, take the whole talong, choose, then kasta.
@@ -191,22 +213,24 @@ export const VIRA = 13;
 const gask = (n: number, lvl: Level, misereSize?: MisereSize): Contract[] => {
   // Gask på 5 and 6 need 12 tricks, Vira (Gask på 13) all 13 (SPEC.md §5).
   const tricks = n === VIRA ? 13 : n >= 5 ? 12 : 7 + n;
-  const name = n === -1 ? "Minusgask" : n === VIRA ? "Vira" : `Gask på ${n}`;
+  const name = gaskName(n);
   const common = {
-    family: "gask" as const, level: lvl, turnUp: null, swap: null,
-    buy: { kind: "keepAndTakeTalon" as const, keep: Math.max(n, 0), setAside: n === -1 },
+    family: "gask" as const, level: lvl, swap: null,
+    // Minusgask's nerslag: the top talong card laid aside face down, taken after choosing the game.
+    turnUp: n === MINUSGASK ? { cards: 1, bought: "afterChoice" as const, faceDown: true } : null,
+    buy: { kind: "keepAndTakeTalon" as const, keep: Math.max(n, 0) },
     allowed: { ...NO_REBUY, fold: true, defenceBuy: false },
   };
   const trumpGame: Contract = {
     ...common, id: `gask-${n}-trump`, name: `${name} (trumf)`, goal: { kind: "tricks", min: tricks }, handSize: 13,
-    discard: { after: "choice", downTo: 13, mayKeepMore: false }, trump: "afterBuy", visibility: "closed", payment: { factor: "bySuit", multiplier: 1, cowardPins: n === -1 },
+    discard: { after: "choice", downTo: 13, mayKeepMore: false }, trump: "afterBuy", visibility: "closed", payment: { factor: "bySuit", multiplier: 1, cowardPins: n === MINUSGASK },
   };
   if (misereSize === undefined) return [trumpGame];
   const misereGame: Contract = {
     ...common, ...misere(misereSize), id: `gask-${n}-misere`, name: `${name} (misär)`, trump: "none",
     // After choosing misär, kasta down to 13 (12 for a Petite), or fewer: misär may play with more.
     discard: { after: "choice", downTo: misere(misereSize).handSize, mayKeepMore: true },
-    payment: { factor: "misere", multiplier: 1, cowardPins: n === -1 },
+    payment: { factor: "misere", multiplier: 1, cowardPins: n === MINUSGASK },
   };
   return [trumpGame, misereGame];
 };
@@ -241,7 +265,7 @@ const tupp = (n: TuppSize, lvl: Level): Contract => {
   const common = {
     level: lvl, goal: { kind: "misere" as const, tricksAllowed: 0 as const }, trump: "none" as const,
     // Turn up n bytkort, buy blind from the other 13 − n cards, then swap in at least one.
-    turnUp: { cards: n, bought: "never" as const }, buy: { kind: "blind" as const, min: 0, max: 13 - n },
+    turnUp: { cards: n, bought: "never" as const, faceDown: false }, buy: { kind: "blind" as const, min: 0, max: 13 - n },
     discard: null, visibility: "closed" as const,
     allowed: { rebuy: true, rebuyMinTalon: n + 1, fold: true, defenceBuy: true },
   };
@@ -276,7 +300,7 @@ const SOLO_COMMON = {
 const solo = (tricks: number, lvl: Level): Contract => {
   return {
     ...SOLO_COMMON, id: `solo-${tricks}`, name: tricks === 13 ? "Solo Vira" : `Solo ${tricks}`, family: "solo",
-    level: lvl, goal: { kind: "tricks", min: tricks }, handSize: 13, discard: null, trump: "beforeBuy",
+    level: lvl, goal: { kind: "tricks", min: tricks }, handSize: 13, discard: null, trump: "named",
     visibility: "closed", payment: { factor: "bySuit", multiplier: 1, cowardPins: false },
   };
 };
@@ -294,7 +318,7 @@ const soloMisere = (size: MisereSize, name: string, lvl: Level): Contract => {
 const hopeSolo = (tricks: number, lvl: Level): Contract => {
   return {
     ...SOLO_COMMON, id: `hope-solo-${tricks}`, name: `Hope Solo ${tricks}`, family: "hopeSolo", level: lvl,
-    goal: { kind: "tricks", min: tricks }, handSize: 13, discard: null, trump: "beforeBuy", visibility: "royale",
+    goal: { kind: "tricks", min: tricks }, handSize: 13, discard: null, trump: "named", visibility: "royale",
     payment: { factor: "offSuit", multiplier: 1, cowardPins: false },
   };
 };
@@ -307,7 +331,7 @@ export const CONTRACTS: readonly Contract[] = [
   turnUp("turne", 6, level(1)), turnUp("turne", 7, level(2)), turnUp("turne", 8, level(3)),
   turnUp("vingel", 6, level(1)), turnUp("vingel", 7, level(2)), turnUp("vingel", 8, level(3)),
   turnUp("tringel", 9, level(4)),
-  ...gask(-1, level(-1), "PF"), ...gask(0, level(0), "GF"), ...gask(1, level(1), "P"), ...gask(2, level(2), "G"),
+  ...gask(MINUSGASK, level(-1), "PF"), ...gask(0, level(0), "GF"), ...gask(1, level(1), "P"), ...gask(2, level(2), "G"),
   ...gask(3, level(3), "PO"), ...gask(4, level(4), "GO"), ...gask(6, level(6)), ...gask(5, level(8)),
   ...gask(VIRA, level(12)),
   kopmisar(4, level(2), "PF"), kopmisar(3, level(4), "GF"), kopmisar(2, level(6), "P"), kopmisar(1, level(8), "G"),
