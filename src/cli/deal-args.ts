@@ -13,12 +13,12 @@ const DEFAULT_PLAYERS = 4;
 const DEFAULT_GIVEN = 0;
 
 /** Only plain digits count as a whole number: no signs, spaces, decimals, exponents or hex. */
-function parseWhole(text: string): number | undefined {
+const parseWhole = (text: string): number | undefined => {
   return /^\d+$/.test(text) ? Number(text) : undefined;
-}
+};
 
 /** `randomSeed` gives the seed when none is passed. */
-export function parseDealArgs(args: readonly string[], randomSeed: () => number): DealArgs {
+export const parseDealArgs = (args: readonly string[], randomSeed: () => number): DealArgs => {
   if (args.includes("--help") || args.includes("-h")) return { kind: "help" };
   if (args.length > 3) return { kind: "error", message: `Too many arguments: "${args.slice(3).join(" ")}".` };
   const [seedArg, playersArg, givenArg] = args;
@@ -36,4 +36,4 @@ export function parseDealArgs(args: readonly string[], randomSeed: () => number)
     return { kind: "error", message: `Given's seat must be 0 to ${players - 1}, not "${givenArg}".` };
   }
   return { kind: "deal", seed, players, given };
-}
+};

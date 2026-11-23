@@ -20,11 +20,11 @@ export interface Roles {
 }
 
 /** The seat `steps` places medsols (to the left) of `seat`. */
-export function leftOf(seat: Seat, playerCount: PlayerCount, steps = 1): Seat {
+export const leftOf = (seat: Seat, playerCount: PlayerCount, steps = 1): Seat => {
   return (((seat + steps) % playerCount) + playerCount) % playerCount;
-}
+};
 
-export function rolesFor(dealer: Seat, playerCount: PlayerCount): Roles {
+export const rolesFor = (dealer: Seat, playerCount: PlayerCount): Roles => {
   if (!Number.isInteger(dealer) || dealer < 0 || dealer >= playerCount) {
     throw new Error(`No seat ${dealer} at a table of ${playerCount}`);
   }
@@ -39,22 +39,22 @@ export function rolesFor(dealer: Seat, playerCount: PlayerCount): Roles {
   const [forehand, middlehand] = active;
   if (forehand === undefined || middlehand === undefined) throw new Error("A giv needs three active seats");
   return { playerCount, dealer, forehand, middlehand, restingSeats };
-}
+};
 
 /** The three active seats in order: FH, MH and EH (given). The order of dealing and bidding. */
-export function activeSeats(roles: Roles): [Seat, Seat, Seat] {
+export const activeSeats = (roles: Roles): [Seat, Seat, Seat] => {
   return [roles.forehand, roles.middlehand, roles.dealer];
-}
+};
 
 /** The next given is the player to the left of the current one. */
-export function nextDealer(dealer: Seat, playerCount: PlayerCount): Seat {
+export const nextDealer = (dealer: Seat, playerCount: PlayerCount): Seat => {
   return leftOf(dealer, playerCount, 1);
-}
+};
 
 /**
  * Seating drawn by lot at the start of a parti: the players in medsols order. The first in
  * the drawn order deals first.
  */
-export function drawSeating<T>(players: readonly T[], rng: Rng): T[] {
+export const drawSeating = <T>(players: readonly T[], rng: Rng): T[] => {
   return shuffle(players, rng);
-}
+};

@@ -25,24 +25,24 @@ const ALIAS_LIST = SUITS.flatMap((suit) => SUIT_ALIASES[suit].map((alias) => ({ 
   (a, b) => b.alias.length - a.alias.length,
 );
 
-export function formatSuit(suit: Suit): string {
+export const formatSuit = (suit: Suit): string => {
   return SUIT_SYMBOLS[suit];
-}
+};
 
-export function formatRank(rank: Rank): string {
+export const formatRank = (rank: Rank): string => {
   return RANK_LETTERS[rank];
-}
+};
 
-export function formatCard(card: Card): string {
+export const formatCard = (card: Card): string => {
   return SUIT_SYMBOLS[card.suit] + RANK_LETTERS[card.rank];
-}
+};
 
 /**
  * Parses a card: the suit (symbol or alias) followed by the rank, in any case, with spaces
  * allowed only between suit and rank, e.g. "♠Kn", "skn", "Sp D", "k10". The emoji form of a
  * suit symbol ("♠️") is accepted too. Throws on anything else.
  */
-export function parseCard(text: string): Card {
+export const parseCard = (text: string): Card => {
   const input = text.replace(/\uFE0F/g, "").trim().toLowerCase();
   for (const { alias, suit } of ALIAS_LIST) {
     if (!input.startsWith(alias)) continue;
@@ -52,4 +52,4 @@ export function parseCard(text: string): Card {
     if (rank !== undefined) return { suit, rank };
   }
   throw new Error(`Not a card: "${text}"`);
-}
+};

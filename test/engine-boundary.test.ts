@@ -15,7 +15,7 @@ const boundaryRules = new Set([
 ]);
 
 /** Lints `code` as if it were `file`, and returns the boundary errors. */
-async function boundaryErrors(file: string, code: string): Promise<string[]> {
+const boundaryErrors = async (file: string, code: string): Promise<string[]> => {
   const [result] = await eslint.lintText(code, { filePath: path.join(repoRoot, file) });
   if (!result) throw new Error("ESLint returned no result");
   // A parse error or an ignored file has no ruleId; fail rather than pass by accident.
@@ -24,7 +24,7 @@ async function boundaryErrors(file: string, code: string): Promise<string[]> {
   return result.messages
     .filter((m) => m.ruleId !== null && boundaryRules.has(m.ruleId))
     .map((m) => m.message);
-}
+};
 
 describe("engine boundary (lint)", () => {
   it.each([

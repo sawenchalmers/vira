@@ -56,5 +56,7 @@ export default tseslint.config(
   { ignores: ["dist/", "coverage/", "node_modules/"] },
   js.configs.recommended,
   ...tseslint.configs.strict,
+  // Functions are written as `const f = (…) => { … }`, not `function f(…) { … }`.
+  { rules: { "func-style": ["error", "expression"] } },
   engine,
 );
