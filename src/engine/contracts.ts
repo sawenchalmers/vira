@@ -28,14 +28,13 @@ import { level, type Level } from "./level.js";
  *   defence buys. Trumf Solos name trumf; the misärer run from Petite Falsk to Ouverte Royale.
  * - tupp: tRupp, tVupp, tTupp (Uppslagsmisär). A misär: 3/2/1 talong cards are turned up and
  *   can't be bought; lomber buys blind from the rest, then swaps in at least one turned-up
- *   card (bytkort) and may kasta handkort for it. Normally Petite.
- * - hona: Höna. A Tupp where lomber takes the whole uppslag and lays nothing away: plays with
- *   16/15/14 cards and is paid double.
+ *   card (bytkort) and may kasta handkort for it. Normally Petite. If the whole uppslag is
+ *   swapped in and nothing is laid away, the giv becomes a Höna by itself (see Swap).
  * - hopeSolo: Hope Solo 6–13. A trumf Solo played Ouverte Royale (hand open before the köp,
  *   the defence may consult), paid as Ofärg.
  */
 export type Family =
-  | "begar" | "turne" | "vingel" | "tringel" | "gask" | "solo" | "hopeSolo" | "kopmisar" | "tupp" | "hona" | "gok";
+  | "begar" | "turne" | "vingel" | "tringel" | "gask" | "solo" | "hopeSolo" | "kopmisar" | "tupp" | "gok";
 
 export type Goal =
   | { readonly kind: "tricks"; readonly min: number }
@@ -70,8 +69,16 @@ export type TurnUp = { readonly cards: number; readonly bought: "must" | "never"
  * in at least `min` turned-up cards. Each swapped card allows kasting the next number of
  * handkort in `discardPerSwap` (2, then 1, then 0); lomber may kasta fewer. Rejected bytkort and
  * the kastade handkort lie open (the tuppstjärt).
+ *
+ * If the whole uppslag is swapped in and nothing is laid away (the tuppstjärt is empty), the giv
+ * becomes `whenTailEmpty` by itself: the Höna, played with more cards and paid more. Lomber
+ * doesn't choose or announce it.
  */
-export type Swap = { readonly min: number; readonly discardPerSwap: readonly number[] } | null;
+export type Swap = {
+  readonly min: number;
+  readonly discardPerSwap: readonly number[];
+  readonly whenTailEmpty: { readonly name: string; readonly handSize: number; readonly multiplier: number };
+} | null;
 
 /** Lomber's hand: hidden; face up for the play (Ouverte); or face up already before the köp (Royale). */
 export type Visibility = "closed" | "ouverte" | "royale";
@@ -101,7 +108,7 @@ export interface Contract {
   /** π, the level of the bid that leads to the contract. */
   readonly level: Level;
   readonly goal: Goal;
-  /** 12 for Petite (one extra card is kastad), 13 for Grande, more for a Höna (13 + its uppslag). */
+  /** 12 for Petite (one extra card is kastad), 13 for Grande. A Höna's hand size is in its swap. */
   readonly handSize: number;
   readonly trump: TrumpSource;
   readonly turnUp: TurnUp;
@@ -143,7 +150,7 @@ export const TURN_UP_CARDS = { turne: 1, vingel: 2, tringel: 3 } as const;
 export type TurnUpFamily = keyof typeof TURN_UP_CARDS;
 
 /** Families paid more than once; everything else ×1. */
-export const PAYMENT_MULTIPLIERS: Partial<Record<Family, number>> = { vingel: 2, tringel: 3, hona: 2 };
+export const PAYMENT_MULTIPLIERS: Partial<Record<Family, number>> = { vingel: 2, tringel: 3 };
 
 const TURN_UP_NAMES: Record<TurnUpFamily, string> = { turne: "Turné", vingel: "Vingel", tringel: "Tringel" };
 
@@ -221,26 +228,31 @@ export type TuppSize = keyof typeof TUPP_NAMES;
 /** For each swapped bytkort, how many handkort lomber may kasta: 2 for the first, 1, then 0. */
 const DISCARD_PER_SWAP = [2, 1, 0] as const;
 
+/** A Höna is paid double (SPEC.md §5). */
+const HONA_MULTIPLIER = 2;
+
 /**
- * Tupp and its Höna (Uppslagsmisär): two contracts, decided by the swap. The Tupp is normally
+ * Tupp (Uppslagsmisär), with its Höna as a variant decided by the swap. The Tupp is normally
  * Petite; taking the whole uppslag without laying anything away makes it a Höna, played with
  * 13 + n cards (the play ends with n cards left) and paid double. Ombyte needs one card more
  * than the uppslag left.
  */
-const tupp = (n: TuppSize, lvl: Level): Contract[] => {
+const tupp = (n: TuppSize, lvl: Level): Contract => {
   const common = {
     level: lvl, goal: { kind: "misere" as const, tricksAllowed: 0 as const }, trump: "none" as const,
     // Turn up n bytkort, buy blind from the other 13 − n cards, then swap in at least one.
     turnUp: { cards: n, bought: "never" as const }, buy: { kind: "blind" as const, min: 0, max: 13 - n },
-    swap: { min: 1, discardPerSwap: DISCARD_PER_SWAP }, discard: null, visibility: "closed" as const,
+    discard: null, visibility: "closed" as const,
     allowed: { rebuy: true, rebuyMinTalon: n + 1, fold: true, defenceBuy: true },
   };
-  return [
-    { ...common, id: `tupp-${n}`, name: TUPP_NAMES[n], family: "tupp", handSize: 12,
-      payment: { factor: "misere", multiplier: 1, cowardPins: false } },
-    { ...common, id: `hona-${n}`, name: `Höna (${TUPP_NAMES[n]})`, family: "hona", handSize: 13 + n,
-      payment: { factor: "misere", multiplier: PAYMENT_MULTIPLIERS.hona ?? 1, cowardPins: false } },
-  ];
+  return {
+    ...common, id: `tupp-${n}`, name: TUPP_NAMES[n], family: "tupp", handSize: 12,
+    swap: {
+      min: 1, discardPerSwap: DISCARD_PER_SWAP,
+      whenTailEmpty: { name: `Höna (${TUPP_NAMES[n]})`, handSize: 13 + n, multiplier: HONA_MULTIPLIER },
+    },
+    payment: { factor: "misere", multiplier: 1, cowardPins: false },
+  };
 };
 
 /** Gök: a misär where lomber has givhand + talong and kastar (at most) 13; no defence köp. */
@@ -299,7 +311,7 @@ export const CONTRACTS: readonly Contract[] = [
   ...gask(3, level(3), "PO"), ...gask(4, level(4), "GO"), ...gask(6, level(6)), ...gask(5, level(8)),
   ...gask(VIRA, level(12)),
   kopmisar(4, level(2), "PF"), kopmisar(3, level(4), "GF"), kopmisar(2, level(6), "P"), kopmisar(1, level(8), "G"),
-  ...tupp(3, level(1)), ...tupp(2, level(2)), ...tupp(1, level(4)),
+  tupp(3, level(1)), tupp(2, level(2)), tupp(1, level(4)),
   gok("gokagg", "Gökägg", level(0), "G", false),
   gok("gokunge", "Gökunge", level(4, 3), "G", true),
   gok("muntergok", "Muntergök", level(3), "GO", false),

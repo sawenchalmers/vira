@@ -35,10 +35,10 @@ const gaskBid = (n: number, lvl: Level, passingRequirement?: string): Bid => {
   };
 };
 
-/** A Tupp bid becomes its Tupp or its Höna, decided by the swap after the köp. */
+/** A Tupp bid: one contract, which becomes a Höna by itself if the tuppstjärt stays empty. */
 const tuppBid = (n: TuppSize, lvl: Level, passingRequirement: string): Bid => ({
   id: `tupp-${n}`, name: TUPP_NAMES[n], family: "tupp", level: lvl, passingRequirement,
-  contracts: [`tupp-${n}`, `hona-${n}`], choice: "afterBuy",
+  contracts: [`tupp-${n}`], choice: "none",
 });
 
 /** A Solo cell holding a misär and a Hope Solo: lomber chooses after the bidding. */

@@ -162,17 +162,19 @@ describe("the other families", () => {
   });
 
   it.each([[3, "tRupp", "1", "4a"], [2, "tVupp", "2", "3a"], [1, "tTupp", "4", "2a"]] as const)(
-    "%i turned up: %s on level %s, AK %s, becomes its Tupp or its Höna after the köp", (n, name, lvl, ak) => {
+    "%i turned up: %s on level %s, AK %s, one contract with a Höna variant", (n, name, lvl, ak) => {
       const bid = bidById(`tupp-${n}`);
-      expect([bid.name, formatLevel(bid.level), bid.passingRequirement, bid.choice]).toEqual([name, lvl, ak, "afterBuy"]);
-      const [tupp, hona] = contractsOf(bid) as [Contract, Contract];
+      expect([bid.name, formatLevel(bid.level), bid.passingRequirement, bid.choice]).toEqual([name, lvl, ak, "none"]);
+      const [tupp, ...others] = contractsOf(bid) as [Contract];
+      expect(others).toHaveLength(0);
       // Turn up n bytkort (never bought), buy blind from the rest, then swap in at least one.
       expect(tupp.turnUp).toEqual({ cards: n, bought: "never" });
       expect(tupp.buy).toEqual({ kind: "blind", min: 0, max: 13 - n });
-      expect(tupp.swap).toEqual({ min: 1, discardPerSwap: [2, 1, 0] });
-      expect(hona.swap).toEqual(tupp.swap);
+      // If the tuppstjärt stays empty, the giv becomes a Höna by itself: 13 + n cards, paid double.
+      expect(tupp.swap).toEqual({
+        min: 1, discardPerSwap: [2, 1, 0], whenTailEmpty: { name: `Höna (${name})`, handSize: 13 + n, multiplier: 2 },
+      });
       expect(tupp).toMatchObject({ handSize: 12, goal: { kind: "misere", tricksAllowed: 0 }, payment: { multiplier: 1 } });
-      expect(hona).toMatchObject({ family: "hona", handSize: 13 + n, payment: { factor: "misere", multiplier: 2 } });
       expect(tupp.allowed).toEqual({ rebuy: true, rebuyMinTalon: n + 1, fold: true, defenceBuy: true });
     });
 
