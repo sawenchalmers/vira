@@ -51,20 +51,30 @@ export const hand = (text: string): string => `Din hand: ${text}`;
 
 export const buyQuestion = (min: number, max: number): string => `Hur många kort köper du? (${min}–${max})`;
 export const numberError = (min: number, max: number): string => `Svara med ett tal från ${min} till ${max}.`;
-export const blindBuy = (count: number): string =>
-  count === 0 ? "Du köper inget." : `Du kastar ${count} kort och köper ${count} blint från talongen.`;
-export const keepAndTake = (keep: number, afterNerslag: boolean): string =>
-  `${keep === 0 ? "Du kastar hela givhanden" : `Du behåller ${keep} givkort, kastar resten`} ` +
-  `och tar ${afterNerslag ? "resten av talongen" : "hela talongen"}.`;
+/** A köp of `count` cards, of which `turnedUp` are the turned-up cards (Turné, Vingel, Tringel) and the rest blind. */
+export const blindBuy = (count: number, turnedUp: number): string => {
+  if (count === 0) return "Du köper inget.";
+  const blind = count - turnedUp;
+  const parts = [
+    ...(turnedUp === 0 ? [] : [turnedUp === 1 ? "det uppvända kortet" : "de uppvända korten"]),
+    ...(blind === 0 ? [] : [`${blind} blint från talongen`]),
+  ];
+  return `Du kastar ${count} kort och köper ${parts.join(" och ")}.`;
+};
+export const keepAndTake = (keep: number, handSize: number, afterNerslag: boolean): string => {
+  const hand = keep === 0 ? "Du kastar hela givhanden" : keep === handSize ? "Du behåller hela givhanden" : `Du behåller ${keep} givkort, kastar resten`;
+  return `${hand} och tar ${afterNerslag ? "resten av talongen" : "hela talongen"}.`;
+};
 export const pickFromHandAndTalon = (openTalon: boolean): string =>
   openTalon
-    ? "Talongen läggs upp öppet. Du tar den och behåller 13 av de 26 korten; kort ur talongen spelas öppet."
-    : "Du tar talongen och behåller 13 av de 26 korten.";
+    ? "Talongen läggs upp öppet. Du tar den till handen; kort ur talongen spelas öppet."
+    : "Du tar talongen till handen.";
 
 export const swap = (rule: NonNullable<Contract["swap"]>): string =>
   `Byt in minst ${rule.min} bytkort. För varje bytkort får du kasta ${rule.discardPerSwap.join(", ")} handkort ` +
   `(i tur och ordning), eller färre. Tar du hela uppslaget utan att lägga något åt sidan blir det ` +
   `${rule.whenTailEmpty.name}: spelas med ${rule.whenTailEmpty.handSize} kort, betalas ×${rule.whenTailEmpty.multiplier}.`;
+export const swapAgain = (rule: NonNullable<Contract["swap"]>): string => `Byt in minst ${rule.min} av de nya bytkorten.`;
 
 /** What an Omköp is called for each family (SPEC.md §0). */
 const REBUY_NAMES: Partial<Record<Family, string>> = { turne: "Omturné", vingel: "Omvingel", tringel: "Omtringel", tupp: "Ombyte" };

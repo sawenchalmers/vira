@@ -50,7 +50,7 @@ describe("walking through a contract until the first trick", () => {
   });
 
   it("a raise changes the contract", async () => {
-    const { shown } = await walk("begar-6", ["1", "sp", "0", "n", "s"]);
+    const { shown } = await walk("begar-6", ["1", "sp", "0", "s"]);
     expect(shown).toContain("Du tar större: 7-spel.");
     expect(shown.at(-1)).toMatch(/^Klart för första sticket: 7-spel, trumf ♠\. Mål: minst 7 stick/);
   });
@@ -59,7 +59,7 @@ describe("walking through a contract until the first trick", () => {
     const { shown, asked } = await walk("begar-6", ["", "hj", "3", "j", "4", "ja", "2", "n", "s"]);
     expect(shown.filter((line) => line === "Du gör Omköp.")).toHaveLength(2);
     expect(asked).toContain("Omköp? 10 kort kvar i talongen. (j/n)");
-    expect(asked).toContain("Hur många kort köper du? (0–6)");
+    expect(asked).toContain("Hur många kort köper du? (1–6)");
     expect(asked).toContain("Omköp? 4 kort kvar i talongen. (j/n)");
   });
 
@@ -91,14 +91,14 @@ describe("walking through a contract until the first trick", () => {
     const second = deal.talon.slice(6, 8).map(formatCard).join(" ");
     expect(shown).toContain("Du gör Ombyte.");
     expect(shown.some((line) => line.startsWith(`Uppvänt ur talongen: ${second}.`))).toBe(true);
-    expect(asked).toContain("Hur många kort köper du? (0–5)");
+    expect(asked).toContain("Hur många kort köper du? (1–5)");
     expect(asked).toContain("Ombyte? 7 kort kvar i talongen. (j/n)");
     // 2 left after the second köp, and Ombyte needs 3: no more offers.
     expect(shown).toContain("Talongen räcker inte till fler Ombyte.");
   });
 
   it("a fold ends the giv", async () => {
-    const { shown } = await walk("begar-6", ["", "hj", "0", "n", "l"]);
+    const { shown } = await walk("begar-6", ["", "hj", "0", "l"]);
     expect(shown.at(-1)).toBe("Du lägger spelet (Begär). Given är slut.");
   });
 
@@ -144,15 +144,37 @@ describe("walking through a contract until the first trick", () => {
     expect(shown.some((line) => line.includes("Höna (tVupp): spelas med 15 kort"))).toBe(true);
   });
 
+  // Which talong positions (top first) may be seen: those turned up, and Minusgask's nerslag once taken.
   it.each([
-    ["begar-6", ["", "hj", "3", "n", "s"], 0],
-    ["vingel-7", ["", "hj", "2", "n", "s"], 2],
-  ])("%s shows no talong card except those laid out face up", async (id, answers, laidOut) => {
+    ["begar-6", ["", "hj", "3", "j", "2", "n", "s"], []],
+    ["vingel-7", ["", "hj", "2", "n", "s"], [0, 1]],
+    ["turne-7", ["", "1", "j", "1", "j", "3", "n", "s"], [0, 1, 2]],
+    ["tupp-2", ["", "4", "j", "3", "s"], [0, 1, 6, 7]],
+    ["gask--1-misere", ["", "2", "s"], [0]],
+    ["gokagg", ["", "s"], []],
+    ["solo-misere-pf", ["", "1"], []],
+  ])("%s shows no talong card except those laid out face up", async (id, answers, visible) => {
     const deal = dealWithTalon("♥K", "♦7");
     const { shown } = await walk(id, answers, deal);
     const text = shown.join("\n");
     deal.talon.forEach((card, i) => {
-      expect(text.includes(formatCard(card)), formatCard(card)).toBe(i < laidOut);
+      expect(text.includes(formatCard(card)), `${formatCard(card)} at ${i}`).toBe((visible as number[]).includes(i));
     });
+  });
+
+  it("no Omköp after a köp of no cards, and an Omköp buys at least one", async () => {
+    const none = await walk("begar-6", ["", "hj", "0", "s"]);
+    expect(none.asked.some((q) => q.startsWith("Omköp?"))).toBe(false);
+    const some = await walk("kop-4", ["", "4", "j", "4", "n", "s"]);
+    expect(some.asked).toContain("Hur många kort köper du? (4–9)");
+  });
+
+  it("texts: turned-up cards bought apart from the blind ones, Vira keeps the whole givhand, Gök takes the talong", async () => {
+    const turne = await walk("turne-7", ["", "3", "n", "s"]);
+    expect(turne.shown).toContain("Du kastar 3 kort och köper det uppvända kortet och 2 blint från talongen. (Korten flyttas inte än: #10.)");
+    const vira = await walk("gask-13-trump", ["hj", "s"]);
+    expect(vira.shown.some((line) => line.startsWith("Du behåller hela givhanden och tar hela talongen."))).toBe(true);
+    const gok = await walk("gokagg", ["", "s"]);
+    expect(gok.shown.some((line) => line.startsWith("Du tar talongen till handen."))).toBe(true);
   });
 });

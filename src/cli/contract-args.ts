@@ -20,7 +20,10 @@ export const parseContractArgs = (args: readonly string[], randomSeed: () => num
   if (args.includes("--help") || args.includes("-h")) return { kind: "help" };
   if (args.includes("--list")) return { kind: "list" };
   const option = args.find((arg) => arg.startsWith("-"));
-  if (option !== undefined) return { kind: "error", message: `Unknown option "${option}".` };
+  if (option !== undefined) {
+    const hint = /^-\d+$/.test(option) ? " For Gask på −1, write Minusgask." : "";
+    return { kind: "error", message: `Unknown option "${option}".${hint}` };
+  }
   // On Windows, npm escapes an argument with spaces for cmd ("^Vingel^ 7^"), and inside quotes
   // the carets stay; no contract name has one, so drop them.
   const words = args.map((arg) => arg.replaceAll("^", "").trim()).filter((word) => word !== "");

@@ -26,6 +26,8 @@ interface Walk {
   drawn: number;
   /** The cards the last turn-up laid out (Minusgask: its nerslag). */
   laidOut: readonly Card[];
+  /** How many cards the last köp took; after a köp of none there is no Omköp. */
+  lastBought: number;
 }
 
 const talonLeft = (w: Walk): number => w.deal.talon.length - w.drawn;
@@ -78,6 +80,18 @@ const askChoice = (io: Io, question: string, yes: readonly string[], no: readonl
 const contractAfterRaise = (b: Bid, current: Contract): Contract =>
   contractsOf(b).find((c) => c.goal.kind === current.goal.kind) ?? firstContract(b);
 
+/** A blind köp of at least `min` cards, at most what the contract and the talong allow. */
+const buyBlind = async (w: Walk, min: number): Promise<void> => {
+  const { buy, turnUp } = w.contract;
+  if (buy.kind !== "blind") return;
+  const max = Math.min(buy.max, talonLeft(w));
+  const count = await askNumber(w.io, say.buyQuestion(min, max), min, max);
+  w.drawn += count;
+  w.lastBought = count;
+  const turnedUp = turnUp?.bought === "must" ? turnUp.cards : 0;
+  w.io.show(`${say.blindBuy(count, turnedUp)} ${say.notBuilt(10)}`);
+};
+
 /** What each phase does, until the first trick. */
 const STEPS: Record<Exclude<Phase, "bidding" | "play" | "payment">, Step> = {
   raise: async (w) => {
@@ -127,12 +141,9 @@ const STEPS: Record<Exclude<Phase, "bidding" | "play" | "payment">, Step> = {
   buy: async (w) => {
     const { buy, turnUp } = w.contract;
     if (buy.kind === "blind") {
-      const max = Math.min(buy.max, talonLeft(w));
-      const count = await askNumber(w.io, say.buyQuestion(buy.min, max), buy.min, max);
-      w.drawn += count;
-      w.io.show(`${say.blindBuy(count)} ${say.notBuilt(10)}`);
+      await buyBlind(w, buy.min);
     } else if (buy.kind === "keepAndTakeTalon") {
-      w.io.show(`${say.keepAndTake(buy.keep, turnUp !== null)} ${say.notBuilt(33)}`);
+      w.io.show(`${say.keepAndTake(buy.keep, w.hand.length, turnUp !== null)} ${say.notBuilt(33)}`);
     } else if (buy.kind === "pickFromHandAndTalon") {
       w.io.show(`${say.pickFromHandAndTalon(buy.openTalon)} ${say.notBuilt(34)}`);
     }
@@ -143,6 +154,8 @@ const STEPS: Record<Exclude<Phase, "bidding" | "play" | "payment">, Step> = {
   // Omköp repeats the köp while enough talong is left: a new turn-up (and so a new trumf) for
   // Omturné, Omvingel and Omtringel, a new uppslag, köp and swap for Ombyte.
   rebuy: async (w) => {
+    const { buy, swap } = w.contract;
+    if (w.lastBought === 0 || buy.kind !== "blind") return;
     const name = say.rebuyName(w.contract.family);
     while (talonLeft(w) >= w.contract.allowed.rebuyMinTalon) {
       const yes = await askChoice(w.io, say.rebuyQuestion(name, talonLeft(w)), ["j", "ja"], ["n", "nej"], say.yesNoError);
@@ -150,8 +163,9 @@ const STEPS: Record<Exclude<Phase, "bidding" | "play" | "payment">, Step> = {
       w.io.show(say.rebuy(name));
       if (w.contract.turnUp !== null) await STEPS.turnUp(w);
       if (w.contract.trump === "chooseFromTurnUp") await STEPS.declareTrump(w);
-      await STEPS.buy(w);
-      if (w.contract.swap !== null) await STEPS.swap(w);
+      // An Omköp buys at least one card.
+      await buyBlind(w, Math.max(buy.min, 1));
+      if (swap !== null) w.io.show(`${say.swapAgain(swap)} ${say.notBuilt(27)}`);
     }
     w.io.show(say.noMoreRebuy(name));
   },
@@ -186,7 +200,7 @@ const STEPS: Record<Exclude<Phase, "bidding" | "play" | "payment">, Step> = {
 /** Walks lomber (förhand) through `start` and the phases it leads to; stops before the first trick or on a fold. */
 export const walkThrough = async (io: Io, deal: Deal, ruleset: Ruleset, start: Contract): Promise<void> => {
   const hand = deal.dealtHands[deal.roles.forehand] ?? [];
-  const walk: Walk = { io, deal, ruleset, hand, contract: start, trump: undefined, folded: false, drawn: 0, laidOut: [] };
+  const walk: Walk = { io, deal, ruleset, hand, contract: start, trump: undefined, folded: false, drawn: 0, laidOut: [], lastBought: 0 };
   for (const line of say.intro(start, deal.colours, handText(hand))) io.show(line);
   for (const phase of PHASE_ORDER) {
     if (phase === "play" || phase === "payment") break;

@@ -15,6 +15,8 @@ export const terminalIo = (): Io & { readonly close: () => void } => {
       stdout.write(`${question} `);
       const line = await next.next();
       if (line.done === true) throw new Error("The input ended.");
+      // A terminal echoes what is typed; piped answers aren't, so show them.
+      if (stdin.isTTY !== true) stdout.write(`${line.value}\n`);
       return line.value;
     },
     close: () => lines.close(),
