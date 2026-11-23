@@ -1,8 +1,10 @@
 /**
- * Finds the contract a person names for `npm run contract` (#49): a contract's id or name, or a
- * bid's name. Case, spacing and å/ä/ö don't matter, so "gokagg" finds Gökägg.
+ * Finds the contract a person names for `npm run contract` (#49): a contract's id or name, a
+ * bid's name, or a family's name, which means the family's lowest bid ("Tringel" is Tringel 9,
+ * "Gask" is Minusgask). Case, spacing and å/ä/ö don't matter, so "gokagg" finds Gökägg.
  */
-import { contractsOf, type Bid, type Contract, type Ruleset } from "../engine/index.js";
+import { compareLevels, contractsOf, type Bid, type Contract, type Family, type Ruleset } from "../engine/index.js";
+import { FAMILY_NAMES } from "./messages.js";
 
 export type FoundContract =
   | { readonly kind: "found"; readonly contract: Contract }
@@ -27,7 +29,10 @@ export const firstContract = (b: Bid): Contract => {
   return first;
 };
 
-/** A contract by id or name first, then a bid by id or name (its first contract); otherwise names that contain the query. */
+/**
+ * A contract by id or name first, then a bid by id or name (its first contract), then a family
+ * by name (its lowest contract); otherwise names that contain the query.
+ */
 export const findContract = (query: string, ruleset: Ruleset): FoundContract => {
   const wanted = normalise(query);
   const named = (item: Bid | Contract): boolean => normalise(item.id) === wanted || normalise(item.name) === wanted;
@@ -36,6 +41,9 @@ export const findContract = (query: string, ruleset: Ruleset): FoundContract => 
   if (contract !== undefined) return { kind: "found", contract };
   const bid = ruleset.biddingTable.find(named);
   if (bid !== undefined) return { kind: "found", contract: firstContract(bid) };
+  const family = (Object.keys(FAMILY_NAMES) as Family[]).find((f) => normalise(f) === wanted || normalise(FAMILY_NAMES[f]) === wanted);
+  const lowest = contracts.filter((c) => c.family === family).sort((a, b) => compareLevels(a.level, b.level))[0];
+  if (lowest !== undefined) return { kind: "found", contract: lowest };
   const names = [...ruleset.biddingTable, ...contracts].map((item) => item.name);
   const suggestions = [...new Set(names)].filter((name) => normalise(name).includes(wanted));
   return { kind: "notFound", suggestions: suggestions.slice(0, MAX_SUGGESTIONS) };

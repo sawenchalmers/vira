@@ -3,10 +3,16 @@
  * message module; the engine gives data, never text). It starts with the contract walkthrough
  * (#49) and grows into the game loop's message module in #25.
  */
-import { formatCard, formatSuit, type Card, type Colours, type Contract, type Suit } from "../engine/index.js";
+import { formatCard, formatSuit, type Card, type Colours, type Contract, type Family, type Suit } from "../engine/index.js";
 
 const cards = (list: readonly Card[]): string => list.map(formatCard).join(" ");
 const suits = (list: readonly Suit[]): string => list.map(formatSuit).join(" ");
+
+/** The name of each contract family, as a player says it ("Tringel", "Gask"). */
+export const FAMILY_NAMES: Record<Family, string> = {
+  begar: "Begär", turne: "Turné", vingel: "Vingel", tringel: "Tringel", gask: "Gask", solo: "Solo",
+  hopeSolo: "Hope Solo", kopmisar: "Köpmisär", tupp: "Tupp", gok: "Gök",
+};
 
 /** A phase whose cards the engine doesn't move yet; the issue that builds it, when there is one. */
 export const notBuilt = (issue?: number): string =>

@@ -25,9 +25,25 @@ describe("finding the contract for npm run contract", () => {
     expect(foundId(query)).toBe(id);
   });
 
+  it.each([
+    ["Tringel", "tringel-9"],
+    ["vingel", "vingel-6"],
+    ["Turne", "turne-6"],
+    ["Gask", "gask--1-trump"],
+    ["Köpmisär", "kop-4"],
+    ["kopmisar", "kop-4"],
+    ["Tupp", "tupp-3"],
+    ["Gök", "gokagg"],
+    ["Solo", "solo-6"],
+    ["Hope Solo", "hope-solo-6"],
+  ])("a family's name %j finds its lowest bid", (query, id) => {
+    expect(foundId(query)).toBe(id);
+  });
+
   it("suggests names that contain the query", () => {
-    const found = findContract("vingel", FOUR_PLAYERS);
-    expect(found).toEqual({ kind: "notFound", suggestions: ["Vingel 6", "Vingel 7", "Vingel 8"] });
+    expect(findContract("ingel", FOUR_PLAYERS)).toEqual({
+      kind: "notFound", suggestions: ["Vingel 6", "Vingel 7", "Vingel 8", "Tringel 9"],
+    });
     expect(findContract("xyz", FOUR_PLAYERS)).toEqual({ kind: "notFound", suggestions: [] });
   });
 
