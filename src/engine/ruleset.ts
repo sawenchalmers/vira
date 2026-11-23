@@ -30,10 +30,24 @@ export interface Ruleset {
    * pulla, shared equally by the others (18p each at spel på tre, 12p at fyra, 9p at fem).
    */
   readonly stake: { readonly betPoints: number };
-  /** A pinne is worth this many points. */
-  readonly pinPoints: number;
-  /** Böter for a failed tjuvpass (SPEC.md §4.1): this many bets. */
-  readonly penalty: { readonly bets: number };
+  /**
+   * How many bets each outcome moves (SPEC.md §6), times the contract's multiplier (Vingel ×2,
+   * Tringel ×3): hemgång, bet (played or folded), kodilj, and each Omköp, which costs as many
+   * bets as a hemgång gives. Böter for a failed tjuvpass (§4.1) is not multiplied.
+   */
+  readonly bets: {
+    readonly made: number;
+    readonly defeated: number;
+    readonly doubleDefeated: number;
+    readonly rebuy: number;
+    readonly penalty: number;
+  };
+  /** Havsytan (SPEC.md §3): from this level up, Π = π + μ. */
+  readonly seaLevel: number;
+  /** Jackpott (SPEC.md §3): a hemgång at a game price of at least this many points lifts the whole pott. */
+  readonly jackpotFrom: number;
+  /** Ål (SPEC.md §0): every player puts a bet in the pulla when the pott drops below this many bets. */
+  readonly anteBelow: number;
   /** The budtabell this table plays (other groups play other tables). */
   readonly biddingTable: readonly Bid[];
 }
@@ -43,8 +57,10 @@ const HOUSE_RULES = {
   deal: { firstPacket: 4, packet: 3, talonSize: 13 },
   paymentFactors: { topSuit: 4, secondSuit: 2, offSuit: 1, misere: 3 },
   stake: { betPoints: 36 },
-  pinPoints: 6,
-  penalty: { bets: 1 },
+  bets: { made: 1, defeated: 1, doubleDefeated: 2, rebuy: 1, penalty: 1 },
+  seaLevel: 12,
+  jackpotFrom: 144,
+  anteBelow: 3,
   biddingTable: BIDDING_TABLE,
 } as const;
 

@@ -17,10 +17,13 @@ describe("the ruleset for spel på fyra (SPEC.md §1–2, §4.1, §6)", () => {
     expect(FOUR_PLAYERS.paymentFactors).toEqual({ topSuit: 4, secondSuit: 2, offSuit: 1, misere: 3 });
   });
 
-  it("has a bet of 36p, a pinne of 6p and böter of one bet", () => {
+  it("has a bet of 36p: one for hemgång, bet, Omköp and böter, two for kodilj", () => {
     expect(FOUR_PLAYERS.stake.betPoints).toBe(36);
-    expect(FOUR_PLAYERS.pinPoints).toBe(6);
-    expect(FOUR_PLAYERS.penalty.bets).toBe(1);
+    expect(FOUR_PLAYERS.bets).toEqual({ made: 1, defeated: 1, doubleDefeated: 2, rebuy: 1, penalty: 1 });
+  });
+
+  it("has havsytan at 12p, Jackpott from 144p and ål when the pott drops below three bets", () => {
+    expect([FOUR_PLAYERS.seaLevel, FOUR_PLAYERS.jackpotFrom, FOUR_PLAYERS.anteBelow]).toEqual([12, 144, 3]);
   });
 
   it("plays the house budtabell", () => {
@@ -30,7 +33,7 @@ describe("the ruleset for spel på fyra (SPEC.md §1–2, §4.1, §6)", () => {
 
 describe("all rulesets", () => {
   it("spel på tre, fyra and fem differ only in the player count and the vilande", () => {
-    const shared = ["deal", "paymentFactors", "stake", "pinPoints", "penalty", "biddingTable"] as const;
+    const shared = ["deal", "paymentFactors", "stake", "bets", "seaLevel", "jackpotFrom", "anteBelow", "biddingTable"] as const;
     for (const key of shared) {
       expect(THREE_PLAYERS[key], key).toEqual(FOUR_PLAYERS[key]);
       expect(FIVE_PLAYERS[key], key).toEqual(FOUR_PLAYERS[key]);
