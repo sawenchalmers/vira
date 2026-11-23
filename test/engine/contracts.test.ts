@@ -27,10 +27,11 @@ describe("the contract records", () => {
       if (c.goal.kind === "misere") expect(c.trump, c.id).toBe("none");
       else expect(c.trump, c.id).not.toBe("none");
       if (c.handSize === 12) expect(c.goal.kind, c.id).toBe("misere");
-      if (c.turnUpCards > 0) expect(c.buy, c.id).toMatchObject({ kind: "blind", min: c.turnUpCards });
+      if (c.turnUp?.bought === "must") expect(c.buy, c.id).toMatchObject({ kind: "blind", min: c.turnUp.cards });
+      if (c.swap !== null) expect(c.turnUp?.bought, c.id).toBe("never");
       if (c.payment.factor === "misere") expect(c.goal.kind, c.id).toBe("misere");
       // A Petite gets down to 12 in a discard phase, except a Tupp, which kastar as it swaps.
-      if (c.handSize === 12 && c.buy.kind !== "swap") expect(c.discard?.downTo, c.id).toBe(12);
+      if (c.handSize === 12 && c.swap === null) expect(c.discard?.downTo, c.id).toBe(12);
       if (c.discard?.mayKeepMore) expect(c.goal.kind, c.id).toBe("misere");
     }
   });
@@ -152,11 +153,11 @@ describe("the other families", () => {
   });
 
   it("Turné turns up one card, Vingel two and pays double", () => {
-    expect(contractById("turne-7")).toMatchObject({ trump: "turnUp", turnUpCards: 1, payment: { multiplier: 1 } });
-    expect(contractById("vingel-7")).toMatchObject({ trump: "turnUp", turnUpCards: 2, payment: { multiplier: 2 } });
+    expect(contractById("turne-7")).toMatchObject({ trump: "turnUp", turnUp: { cards: 1, bought: "must" }, payment: { multiplier: 1 } });
+    expect(contractById("vingel-7")).toMatchObject({ trump: "turnUp", turnUp: { cards: 2, bought: "must" }, payment: { multiplier: 2 } });
     expect(contractById("vingel-7").allowed.rebuyMinTalon).toBe(3);
     expect(contractById("tringel-9")).toMatchObject({
-      trump: "turnUp", turnUpCards: 3, goal: { kind: "tricks", min: 9 }, payment: { multiplier: 3 }, allowed: { rebuyMinTalon: 4 },
+      trump: "turnUp", turnUp: { cards: 3, bought: "must" }, goal: { kind: "tricks", min: 9 }, payment: { multiplier: 3 }, allowed: { rebuyMinTalon: 4 },
     });
   });
 
@@ -165,7 +166,11 @@ describe("the other families", () => {
       const bid = bidById(`tupp-${n}`);
       expect([bid.name, formatLevel(bid.level), bid.passingRequirement, bid.choice]).toEqual([name, lvl, ak, "afterBuy"]);
       const [tupp, hona] = contractsOf(bid) as [Contract, Contract];
-      expect(tupp.buy).toEqual({ kind: "swap", turnUp: n, discardPerSwap: [2, 1, 0] });
+      // Turn up n bytkort (never bought), buy blind from the rest, then swap in at least one.
+      expect(tupp.turnUp).toEqual({ cards: n, bought: "never" });
+      expect(tupp.buy).toEqual({ kind: "blind", min: 0, max: 13 - n });
+      expect(tupp.swap).toEqual({ min: 1, discardPerSwap: [2, 1, 0] });
+      expect(hona.swap).toEqual(tupp.swap);
       expect(tupp).toMatchObject({ handSize: 12, goal: { kind: "misere", tricksAllowed: 0 }, payment: { multiplier: 1 } });
       expect(hona).toMatchObject({ family: "hona", handSize: 13 + n, payment: { factor: "misere", multiplier: 2 } });
       expect(tupp.allowed).toEqual({ rebuy: true, rebuyMinTalon: n + 1, fold: true, defenceBuy: true });

@@ -56,14 +56,22 @@ export type Buy =
   /** Gask: keep n givkort, take the whole talong; Minusgask first lays its top card aside (nerslag). */
   | { readonly kind: "keepAndTakeTalon"; readonly keep: number; readonly setAside: boolean }
   /** Gök: keep 13 of givhand + talong; Gökunge's talong is open and the cards taken from it are played open. */
-  | { readonly kind: "pickFromHandAndTalon"; readonly openTalon: boolean }
-  /**
-   * Tupp: `turnUp` cards are turned up and can't be bought; lomber buys blind from the rest,
-   * then swaps in at least one turned-up card (bytkort). Each swapped card allows kasting the
-   * next number of handkort in `discardPerSwap` (2, then 1, then 0); lomber may kasta fewer.
-   * Rejected bytkort and the kastade handkort lie open (the tuppstjärt).
-   */
-  | { readonly kind: "swap"; readonly turnUp: number; readonly discardPerSwap: readonly number[] };
+  | { readonly kind: "pickFromHandAndTalon"; readonly openTalon: boolean };
+
+/**
+ * Talong cards turned face up before the köp. Turné, Vingel and Tringel: they `must` be bought
+ * (they count among the drawn cards, can't be kastade, and trumf comes from them). Tupp: they
+ * are `never` bought, only swapped in after the köp (bytkort).
+ */
+export type TurnUp = { readonly cards: number; readonly bought: "must" | "never" } | null;
+
+/**
+ * The swap phase (Tupp), after the köp and before the defence köp and any Ombyte: lomber swaps
+ * in at least `min` turned-up cards. Each swapped card allows kasting the next number of
+ * handkort in `discardPerSwap` (2, then 1, then 0); lomber may kasta fewer. Rejected bytkort and
+ * the kastade handkort lie open (the tuppstjärt).
+ */
+export type Swap = { readonly min: number; readonly discardPerSwap: readonly number[] } | null;
 
 /** Lomber's hand: hidden; face up for the play (Ouverte); or face up already before the köp (Royale). */
 export type Visibility = "closed" | "ouverte" | "royale";
@@ -96,9 +104,9 @@ export interface Contract {
   /** 12 for Petite (one extra card is kastad), 13 for Grande, more for a Höna (13 + its uppslag). */
   readonly handSize: number;
   readonly trump: TrumpSource;
-  /** Turned up before the köp (TURN_UP_CARDS); they must be bought and can't be kastade. */
-  readonly turnUpCards: number;
+  readonly turnUp: TurnUp;
   readonly buy: Buy;
+  readonly swap: Swap;
   readonly discard: Discard;
   readonly visibility: Visibility;
   readonly allowed: {
@@ -123,7 +131,7 @@ const NO_REBUY = { rebuy: false, rebuyMinTalon: 0 } as const;
 const begar = (tricks: number, lvl: Level): Contract => {
   return {
     id: `begar-${tricks}`, name: tricks === 6 ? "Begär" : `${tricks}-spel`, family: "begar", level: lvl,
-    goal: { kind: "tricks", min: tricks }, handSize: 13, trump: "beforeBuy", turnUpCards: 0,
+    goal: { kind: "tricks", min: tricks }, handSize: 13, trump: "beforeBuy", turnUp: null, swap: null,
     buy: { kind: "blind", min: 0, max: 13 }, discard: null, visibility: "closed",
     allowed: { rebuy: true, rebuyMinTalon: 1, fold: true, defenceBuy: true },
     payment: { factor: "bySuit", multiplier: 1, cowardPins: false },
@@ -144,7 +152,7 @@ const turnUp = (family: TurnUpFamily, tricks: number, lvl: Level): Contract => {
   const cards = TURN_UP_CARDS[family];
   return {
     id: `${family}-${tricks}`, name: `${TURN_UP_NAMES[family]} ${tricks}`, family, level: lvl,
-    goal: { kind: "tricks", min: tricks }, handSize: 13, trump: "turnUp", turnUpCards: cards,
+    goal: { kind: "tricks", min: tricks }, handSize: 13, trump: "turnUp", turnUp: { cards, bought: "must" }, swap: null,
     buy: { kind: "blind", min: cards, max: 13 }, discard: null, visibility: "closed",
     // A rebuy turns up as many again and needs one more card left: Omturné 2, Omvingel 3, Omtringel 4.
     allowed: { rebuy: true, rebuyMinTalon: cards + 1, fold: true, defenceBuy: true },
@@ -178,7 +186,7 @@ const gask = (n: number, lvl: Level, misereSize?: MisereSize): Contract[] => {
   const tricks = n === VIRA ? 13 : n >= 5 ? 12 : 7 + n;
   const name = n === -1 ? "Minusgask" : n === VIRA ? "Vira" : `Gask på ${n}`;
   const common = {
-    family: "gask" as const, level: lvl, turnUpCards: 0 as const,
+    family: "gask" as const, level: lvl, turnUp: null, swap: null,
     buy: { kind: "keepAndTakeTalon" as const, keep: Math.max(n, 0), setAside: n === -1 },
     allowed: { ...NO_REBUY, fold: true, defenceBuy: false },
   };
@@ -199,7 +207,7 @@ const gask = (n: number, lvl: Level, misereSize?: MisereSize): Contract[] => {
 /** Köpmisär (Köp N): a misär with a blind köp of at least N cards; Omköp needs N cards left. */
 const kopmisar = (n: number, lvl: Level, size: MisereSize): Contract => {
   return {
-    id: `kop-${n}`, name: `Köp ${n}`, family: "kopmisar", level: lvl, ...misere(size), trump: "none", turnUpCards: 0,
+    id: `kop-${n}`, name: `Köp ${n}`, family: "kopmisar", level: lvl, ...misere(size), trump: "none", turnUp: null, swap: null,
     buy: { kind: "blind", min: n, max: 13 },
     allowed: { rebuy: true, rebuyMinTalon: n, fold: true, defenceBuy: true },
     payment: { factor: "misere", multiplier: 1, cowardPins: false },
@@ -221,8 +229,10 @@ const DISCARD_PER_SWAP = [2, 1, 0] as const;
  */
 const tupp = (n: TuppSize, lvl: Level): Contract[] => {
   const common = {
-    level: lvl, goal: { kind: "misere" as const, tricksAllowed: 0 as const }, trump: "none" as const, turnUpCards: 0,
-    buy: { kind: "swap" as const, turnUp: n, discardPerSwap: DISCARD_PER_SWAP }, discard: null, visibility: "closed" as const,
+    level: lvl, goal: { kind: "misere" as const, tricksAllowed: 0 as const }, trump: "none" as const,
+    // Turn up n bytkort, buy blind from the other 13 − n cards, then swap in at least one.
+    turnUp: { cards: n, bought: "never" as const }, buy: { kind: "blind" as const, min: 0, max: 13 - n },
+    swap: { min: 1, discardPerSwap: DISCARD_PER_SWAP }, discard: null, visibility: "closed" as const,
     allowed: { rebuy: true, rebuyMinTalon: n + 1, fold: true, defenceBuy: true },
   };
   return [
@@ -236,7 +246,7 @@ const tupp = (n: TuppSize, lvl: Level): Contract[] => {
 /** Gök: a misär where lomber has givhand + talong and kastar (at most) 13; no defence köp. */
 const gok = (id: string, name: string, lvl: Level, size: MisereSize, openTalon: boolean): Contract => {
   return {
-    id, name, family: "gok", level: lvl, ...misere(size), trump: "none", turnUpCards: 0,
+    id, name, family: "gok", level: lvl, ...misere(size), trump: "none", turnUp: null, swap: null,
     buy: { kind: "pickFromHandAndTalon", openTalon },
     // "efter Köpet kastas (högst) tretton kort": at most 13, so lomber may play with more.
     discard: { after: "buy", downTo: 13, mayKeepMore: true },
@@ -246,7 +256,7 @@ const gok = (id: string, name: string, lvl: Level, size: MisereSize, openTalon: 
 };
 
 const SOLO_COMMON = {
-  turnUpCards: 0 as const, buy: { kind: "none" as const },
+  turnUp: null, buy: { kind: "none" as const }, swap: null,
   allowed: { ...NO_REBUY, fold: false, defenceBuy: true },
 };
 
