@@ -278,23 +278,29 @@ Begärspel and Solo: tricks needed = the number in the name (Begär = 6-spel).
 - **Vingel N:** top two cards turned up; trump is chosen among their suits; both must be
   bought (they count among the drawn cards; may not be discarded). Omvingel needs ≥3 cards
   left (Omturné ≥2, Omtringel ≥4).
-- **Gask på n:** lomber keeps **n** givkort (chosen before seeing the talong), discards the
-  rest, takes the **whole talong**, discards down to 13, then chooses **trump** (needs 7+n
-  tricks, but Gask på 6 and Gask på 5 need 12 and Vira 13) or the misär type given in the
-  table (misär only up to Gask på 4). **Minusgask (−1):** the top talong card is
+- **Gask på n:** lomber keeps **n** givkort (chosen before seeing the talong), kastar the
+  rest and takes the **whole talong**. Lomber then chooses **trump** (needs 7+n tricks, but
+  Gask på 6 and Gask på 5 need 12 and Vira 13) or the misär type given in the table (misär
+  only up to Gask på 4), and only **after choosing** kastar as many cards as were kept,
+  down to 13. In misär lomber may kasta fewer and play with more than 13; a Petite misär
+  then kastar one more card (12). **Minusgask (−1):** the top talong card is
   turned face down (nerslag), lomber discards the whole hand, takes the other 12, chooses
   the game, then takes the face-down card. **Gask på 0:** no nerslag – whole talong (13).
   No defence köp in Gask.
 - **Gök (Gökägg / Gökunge / Muntergök):** misär. Lomber keeps the whole givhand and has the
-  whole talong; picks 13 of the 26. **Gökunge:** the talong is laid face up; talong cards
+  whole talong; after the köp lomber kastar (at most) 13 of the 26, so may play with more. **Gökunge:** the talong is laid face up; talong cards
   lomber takes are played **open** in front of lomber; rejected talong cards lie aside face
   up; an equal number of handkort are discarded face down. Gökägg = closed (sluten). No
   defence köp.
 - **Köp N (Köpmisär):** lomber buys at least N cards blind from the top (discarding as many).
-  Köp 4 = Petite Falsk: after the köp discard one more card and play with 12; one trick
-  allowed. The defence may then buy, or not, as they wish (the AI defenders follow the
+  Köp 4 and Köp 2 are Petite: after the **last** köp (after any Omköp) lomber may kasta one
+  more card and play with 12. Köp 4 and Köp 3 are Falsk: one trick allowed. The defence may then buy, or not, as they wish (the AI defenders follow the
   misär kutym in `agents/player.md`).
-- **Solo:** lomber does not buy and **cannot fold**; names trump before the defence köp.
+- **Solo:** lomber does not buy and **cannot fold**; names trump before the defence köp. A
+  Solo bid on a level with both a Solo misär and a Hope Solo (levels 3, 6, 12 …) lets lomber
+  choose between them after the bidding (and any *ta större*), before the defence köp. A
+  Solo Petite misär kastar its 13th card right after the bidding (Solo has no köp). All
+  Solo contracts are in the data; above havsytan μ counts as 0 until #27.
 - **tRupp / tVupp / tTupp, Tringel, Hope Solo, Ouverte/Royale misärer:** not used in play yet
   – implement from the rtf in a later phase.
 
