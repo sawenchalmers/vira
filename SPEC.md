@@ -76,13 +76,13 @@ language a player sees. Display and input are localisable and belong to the mess
 | *budtabell* (colloquially *Isberget*) | the bidding table (§3) | `biddingTable` |
 | *nivå*, π | a level in the *budtabell* and its points | `level`, `levelPoints` |
 | *havsytan* | the line between 8p and 12p | `seaLevel` |
-| *bud*, *slutbud* | a bid (any contract in the *budtabell*); the last bid, which *lomber* plays | `contract`, `finalContract` |
+| *bud*, *slutbud* | a bid in the *budtabell*; the last bid, which *lomber* plays. The game actually played is chosen from the final bid's contracts (e.g. *Gask på 2* → trumf or misär) | `Bid`, `finalBid`; the game: `Contract` |
 | *pass* | to pass, and so leave the *budgivning* | `pass` |
-| *ta större*, *höja* | *lomber* taking the *slutbud* larger within its type, before the *köp* | `raiseContract` |
+| *ta större*, *höja* | *lomber* taking the *slutbud* larger within its family, before the *köp* | `raiseBid` |
 | *Bättre* | an already-said bid on the same level that restricts the choice of trump or *misär*: *Trumfgask* / *Trumfsolo*, *i Färg*, *i Högsta Färg*; at *Minusgask*, *Misärgask* (§4) | `upgrade` |
 | *Värre*, *i förhand* | taking over an already-said bid unchanged (FH, or MH from EH) | `takeOver` |
 | *avpassning*, *dubbelpass* | the end of the bidding: two passes | `passOut` |
-| *avpassningskonvention* (AK) | what a passer is expected to hold | `passingConvention` |
+| *avpassningskonvention* (AK) | what a passer is expected to hold; a bid's AK code (e.g. *3h*, *haja*) | `passingConvention`, `passingRequirement` |
 | *Första* / *Andra hand* (1a / 2a pass) | the first / second player to pass; at a *Gök*, only passes on the *Gök* bid itself count (§4.1) | `firstPasser`, `secondPasser` |
 | *tjuvpass*, *tjuvpassare* | a pass that doesn't meet the AK; the player who makes it | `unsoundPass`, `unsoundPasser` |
 | *kravbud* | a bid whose AK can cost *böter*: the three smallest *Gask* and every *Gök* | `penalisedPassBid` |
@@ -257,7 +257,9 @@ P = Petite, F = Falsk, O = Ouverte.
 - **Värre (i förhand):** FH may take over any already-said bid unchanged ("X i förhand");
   MH may take over EH's bid. EH may not.
 - After avpassning, lomber may take the slutbud **larger within its type** (e.g. Gask på 0 →
-  Gask på 2, Begär → Sjuspel, Solo 6 → Solo 8, Gökunge → Muntergök) before the köp.
+  Gask på 2, Begär → Sjuspel, Solo 6 → Solo 8, Gökunge → Muntergök) before the köp: to any
+  higher bid of the same family. A Solo may go to any higher Solo cell, trumf, misär or Hope
+  Solo (Solo 7 → Solo Grande Falsk Misär).
 
 ### 4.1 Avpassningskonventioner & böter
 - Each pass is checked against the AK for the bid passed on (see table). For Gök the first
@@ -275,7 +277,7 @@ Begärspel and Solo: tricks needed = the number in the name (Begär = 6-spel).
 
 - **Begär / N-spel:** lomber names trump (free, or restricted by "i Färg"/"i Högsta Färg")
   **before** the köp; discards any number (0–13) and draws as many **blind from the top**.
-  Then Omköp option (see below), then fold or play. Defence then buys (§5.1).
+  Then Omköp option (see below). Defence then buys (§5.1), then lomber folds or plays.
 - **Turné N:** top talong card is turned up; its suit is trump; it must be bought (counts as
   one of the drawn cards).
 - **Vingel N:** top two cards turned up; trump is chosen among their suits; both must be
@@ -322,9 +324,13 @@ Begärspel and Solo: tricks needed = the number in the name (Begär = 6-spel).
   and the Ouverte/Royale misärer.
 
 **Omköp:** after a köp, lomber may pay one bet (36p: −36 lomber, +12 to each other player)
-and buy again; may be **repeated** while enough talong remains. Offer it after each köp.
+and buy again; may be **repeated** while enough talong remains: at least 1 card (Begär),
+N cards (Köp N), 2 (Omturné), 3 (Omvingel), 4 (Omtringel), or one more than the uppslag
+(Ombyte). Each Omköp costs as many bets as a hemgång gives (×2 for Vingel, ×3 for Tringel).
+Offer it after each köp.
 
-**Fold (lägga spelet):** allowed after the köp (not in Solo).
+**Fold (lägga spelet):** allowed after the köp and the defence köp, before the first trick
+(not in Solo).
 
 ### 5.1 Defence köp
 - In buying order medsols from lomber, skipping the resting player: **förste försvarare**
