@@ -8,6 +8,7 @@ export * from "./contracts.js";
 export * from "./deal.js";
 export * from "./level.js";
 export * from "./notation.js";
+export * from "./phases.js";
 export * from "./random.js";
 export * from "./ruleset.js";
 export * from "./table.js";
