@@ -19,12 +19,12 @@ const scripted = (answers: readonly string[]) => {
   return { io, shown, asked, left: () => queue.length };
 };
 
-/** A giv whose talong starts with the given cards. */
+/** A giv whose talong (still 13 cards) starts with the given cards; the hands aren't changed. */
 const dealWithTalon = (...top: string[]): Deal => {
   const deal = dealCards(0, FOUR_PLAYERS, 1, 2);
   const cards = top.map(parseCard);
   const rest = deal.talon.filter((c) => !cards.some((t) => t.suit === c.suit && t.rank === c.rank));
-  return { ...deal, talon: [...cards, ...rest] };
+  return { ...deal, talon: [...cards, ...rest].slice(0, deal.talon.length) };
 };
 
 const walk = async (id: string, answers: readonly string[], deal = dealCards(0, FOUR_PLAYERS, 1, 2)) => {
@@ -53,6 +53,48 @@ describe("walking through a contract until the first trick", () => {
     const { shown } = await walk("begar-6", ["1", "sp", "0", "n", "s"]);
     expect(shown).toContain("Du tar större: 7-spel.");
     expect(shown.at(-1)).toMatch(/^Klart för första sticket: 7-spel, trumf ♠\. Mål: minst 7 stick/);
+  });
+
+  it("Omköp repeats the köp until lomber stops", async () => {
+    const { shown, asked } = await walk("begar-6", ["", "hj", "3", "j", "4", "ja", "2", "n", "s"]);
+    expect(shown.filter((line) => line === "Du gör Omköp.")).toHaveLength(2);
+    expect(asked).toContain("Omköp? 10 kort kvar i talongen. (j/n)");
+    expect(asked).toContain("Hur många kort köper du? (0–6)");
+    expect(asked).toContain("Omköp? 4 kort kvar i talongen. (j/n)");
+  });
+
+  it("no Omköp once the talong runs out", async () => {
+    const { shown, asked } = await walk("begar-6", ["", "hj", "13", "s"]);
+    expect(asked.some((q) => q.startsWith("Omköp?"))).toBe(false);
+    expect(shown).toContain("Talongen räcker inte till fler Omköp.");
+  });
+
+  it("Omturné turns up the next card, which gives the new trumf", async () => {
+    const { shown } = await walk("turne-7", ["", "1", "j", "1", "n", "s"], dealWithTalon("♦D", "♠7"));
+    expect(shown).toContain("Du gör Omturné.");
+    expect(shown.filter((line) => line.startsWith("Uppvänt ur talongen:"))).toEqual([
+      "Uppvänt ur talongen: ♦D. De måste köpas och räknas bland de köpta korten.",
+      "Uppvänt ur talongen: ♠7. De måste köpas och räknas bland de köpta korten.",
+    ]);
+    expect(shown.at(-1)).toMatch(/trumf ♠/);
+  });
+
+  it("Omvingel: trumf is chosen again among the new cards", async () => {
+    const { asked, shown } = await walk("vingel-7", ["", "hj", "2", "j", "kl", "2", "n", "s"], dealWithTalon("♥K", "♦7", "♠2", "♣5"));
+    expect(asked).toContain("Vilken färg blir trumf? (♠ ♣)");
+    expect(shown.at(-1)).toMatch(/trumf ♣/);
+  });
+
+  it("Ombyte: a new uppslag, köp and swap from the rest of the talong", async () => {
+    const deal = dealWithTalon("♥K", "♦7");
+    const { shown, asked } = await walk("tupp-2", ["", "4", "j", "3", "s"], deal);
+    const second = deal.talon.slice(6, 8).map(formatCard).join(" ");
+    expect(shown).toContain("Du gör Ombyte.");
+    expect(shown.some((line) => line.startsWith(`Uppvänt ur talongen: ${second}.`))).toBe(true);
+    expect(asked).toContain("Hur många kort köper du? (0–5)");
+    expect(asked).toContain("Ombyte? 7 kort kvar i talongen. (j/n)");
+    // 2 left after the second köp, and Ombyte needs 3: no more offers.
+    expect(shown).toContain("Talongen räcker inte till fler Ombyte.");
   });
 
   it("a fold ends the giv", async () => {

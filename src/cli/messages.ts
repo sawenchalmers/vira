@@ -66,9 +66,12 @@ export const swap = (rule: NonNullable<Contract["swap"]>): string =>
   `(i tur och ordning), eller färre. Tar du hela uppslaget utan att lägga något åt sidan blir det ` +
   `${rule.whenTailEmpty.name}: spelas med ${rule.whenTailEmpty.handSize} kort, betalas ×${rule.whenTailEmpty.multiplier}.`;
 
-export const rebuyQuestion = (minTalon: number): string =>
-  `Omköp? Det går så länge minst ${minTalon} kort finns kvar i talongen. (j/n)`;
-export const rebuy = "Du gör Omköp.";
+/** What an Omköp is called for each family (SPEC.md §0). */
+const REBUY_NAMES: Partial<Record<Family, string>> = { turne: "Omturné", vingel: "Omvingel", tringel: "Omtringel", tupp: "Ombyte" };
+export const rebuyName = (family: Family): string => REBUY_NAMES[family] ?? "Omköp";
+export const rebuyQuestion = (name: string, talonLeft: number): string => `${name}? ${talonLeft} kort kvar i talongen. (j/n)`;
+export const rebuy = (name: string): string => `Du gör ${name}.`;
+export const noMoreRebuy = (name: string): string => `Talongen räcker inte till fler ${name}.`;
 export const yesNoError = "Svara j eller n.";
 
 export const discard = (rule: NonNullable<Contract["discard"]>): string =>

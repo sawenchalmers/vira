@@ -22,7 +22,13 @@ interface Walk {
   contract: Contract;
   trump: Suit | undefined;
   folded: boolean;
+  /** How many talong cards have been taken from the top: turned up, laid out as bytkort or bought. */
+  drawn: number;
+  /** The cards the last turn-up laid out (Minusgask: its nerslag). */
+  laidOut: readonly Card[];
 }
+
+const talonLeft = (w: Walk): number => w.deal.talon.length - w.drawn;
 
 type Step = (walk: Walk) => Promise<void> | void;
 
@@ -90,7 +96,10 @@ const STEPS: Record<Exclude<Phase, "bidding" | "play" | "payment">, Step> = {
   turnUp: (w) => {
     const { turnUp } = w.contract;
     if (turnUp === null) return;
-    const laidOut = turnUpCards(w.deal.talon, w.contract);
+    const laidOut = turnUpCards(w.deal.talon.slice(w.drawn), w.contract);
+    w.laidOut = laidOut;
+    // Bytkort are laid aside, not bought; turned-up cards that must be bought are counted in the köp.
+    if (turnUp.bought === "never") w.drawn += laidOut.length;
     if (turnUp.bought === "afterChoice") {
       w.io.show(say.nerslag);
       return;
@@ -104,7 +113,7 @@ const STEPS: Record<Exclude<Phase, "bidding" | "play" | "payment">, Step> = {
   },
   declareTrump: async (w) => {
     const fromTurnUp = w.contract.trump === "chooseFromTurnUp";
-    const options = fromTurnUp ? [...new Set(turnUpCards(w.deal.talon, w.contract).map((c) => c.suit))] : [...SUITS];
+    const options = fromTurnUp ? [...new Set(w.laidOut.map((c) => c.suit))] : [...SUITS];
     w.trump = await chooseSuit(w.io, options);
     w.io.show(say.trumpIs(w.trump));
   },
@@ -118,7 +127,9 @@ const STEPS: Record<Exclude<Phase, "bidding" | "play" | "payment">, Step> = {
   buy: async (w) => {
     const { buy, turnUp } = w.contract;
     if (buy.kind === "blind") {
-      const count = await askNumber(w.io, say.buyQuestion(buy.min, buy.max), buy.min, buy.max);
+      const max = Math.min(buy.max, talonLeft(w));
+      const count = await askNumber(w.io, say.buyQuestion(buy.min, max), buy.min, max);
+      w.drawn += count;
       w.io.show(`${say.blindBuy(count)} ${say.notBuilt(10)}`);
     } else if (buy.kind === "keepAndTakeTalon") {
       w.io.show(`${say.keepAndTake(buy.keep, turnUp !== null)} ${say.notBuilt(33)}`);
@@ -129,9 +140,20 @@ const STEPS: Record<Exclude<Phase, "bidding" | "play" | "payment">, Step> = {
   swap: (w) => {
     if (w.contract.swap !== null) w.io.show(`${say.swap(w.contract.swap)} ${say.notBuilt(27)}`);
   },
+  // Omköp repeats the köp while enough talong is left: a new turn-up (and so a new trumf) for
+  // Omturné, Omvingel and Omtringel, a new uppslag, köp and swap for Ombyte.
   rebuy: async (w) => {
-    const yes = await askChoice(w.io, say.rebuyQuestion(w.contract.allowed.rebuyMinTalon), ["j", "ja"], ["n", "nej"], say.yesNoError);
-    if (yes) w.io.show(`${say.rebuy} ${say.notBuilt(10)}`);
+    const name = say.rebuyName(w.contract.family);
+    while (talonLeft(w) >= w.contract.allowed.rebuyMinTalon) {
+      const yes = await askChoice(w.io, say.rebuyQuestion(name, talonLeft(w)), ["j", "ja"], ["n", "nej"], say.yesNoError);
+      if (!yes) return;
+      w.io.show(say.rebuy(name));
+      if (w.contract.turnUp !== null) await STEPS.turnUp(w);
+      if (w.contract.trump === "chooseFromTurnUp") await STEPS.declareTrump(w);
+      await STEPS.buy(w);
+      if (w.contract.swap !== null) await STEPS.swap(w);
+    }
+    w.io.show(say.noMoreRebuy(name));
   },
   chooseAfterBuy: async (w) => {
     const options = contractsOf(bidOf(w.contract, w.ruleset));
@@ -145,7 +167,7 @@ const STEPS: Record<Exclude<Phase, "bidding" | "play" | "payment">, Step> = {
     }
   },
   discard: (w) => {
-    const [nerslag] = turnUpCards(w.deal.talon, w.contract);
+    const [nerslag] = w.laidOut;
     if (w.contract.turnUp?.bought === "afterChoice" && nerslag !== undefined) w.io.show(say.takeNerslag(nerslag));
     if (w.contract.discard !== null) w.io.show(`${say.discard(w.contract.discard)} ${say.notBuilt()}`);
   },
@@ -164,7 +186,7 @@ const STEPS: Record<Exclude<Phase, "bidding" | "play" | "payment">, Step> = {
 /** Walks lomber (förhand) through `start` and the phases it leads to; stops before the first trick or on a fold. */
 export const walkThrough = async (io: Io, deal: Deal, ruleset: Ruleset, start: Contract): Promise<void> => {
   const hand = deal.dealtHands[deal.roles.forehand] ?? [];
-  const walk: Walk = { io, deal, ruleset, hand, contract: start, trump: undefined, folded: false };
+  const walk: Walk = { io, deal, ruleset, hand, contract: start, trump: undefined, folded: false, drawn: 0, laidOut: [] };
   for (const line of say.intro(start, deal.colours, handText(hand))) io.show(line);
   for (const phase of PHASE_ORDER) {
     if (phase === "play" || phase === "payment") break;
