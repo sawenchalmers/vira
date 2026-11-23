@@ -11,6 +11,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "deal": "tsc -p tsconfig.build.json && node dist/cli/deal.js",
+    "contract": "tsc -p tsconfig.build.json && node dist/cli/contract.js",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "test": "vitest run"

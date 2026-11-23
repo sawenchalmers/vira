@@ -13,7 +13,7 @@ const DEFAULT_PLAYERS = 4;
 const DEFAULT_GIVEN = 0;
 
 /** Only plain digits count as a whole number: no signs, spaces, decimals, exponents or hex. */
-const parseWhole = (text: string): number | undefined => {
+export const parseWhole = (text: string): number | undefined => {
   return /^\d+$/.test(text) ? Number(text) : undefined;
 };
 
