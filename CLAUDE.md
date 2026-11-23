@@ -52,7 +52,7 @@ apply to Claude directly.
      **before** any talong card is revealed;
   2. the köp;
   3. after the köp and after **each** Omköp: buy again (Omköp) or not;
-  4. play or **fold** (lägga spelet).
+  4. after the defence köp: play or **fold** (lägga spelet).
 - The user may look at their own discards (kastkort) until they play to the first trick.
 - Show each trick in a table: Stick | Utspel | (seats in play order) | Tar | Ställning (lomber's tricks – the defence's).
 - Protocol format: see SPEC.md §9. Always in a code block.

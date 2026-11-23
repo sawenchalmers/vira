@@ -25,6 +25,7 @@ tables and the protocol.
 
 | Term | Meaning | Code |
 |---|---|---|
+| *spel på tre*, *fyra*, *fem* | the table rules for that many players: the *vilande*, the deal, payment factors, the stake, *böter* and the *budtabell* | `Ruleset` (`THREE_PLAYERS`, `FOUR_PLAYERS`, `FIVE_PLAYERS`) |
 | *parti* | a session of *givar*, scored together | `Match` |
 | *giv* | a deal; *given* is also the dealer (= EH) | `Deal`, `Dealer` |
 | *rond* | one *giv* per player, so everyone has dealt once | `Round` |
@@ -75,13 +76,13 @@ language a player sees. Display and input are localisable and belong to the mess
 | *budtabell* (colloquially *Isberget*) | the bidding table (§3) | `biddingTable` |
 | *nivå*, π | a level in the *budtabell* and its points | `level`, `levelPoints` |
 | *havsytan* | the line between 8p and 12p | `seaLevel` |
-| *bud*, *slutbud* | a bid (any contract in the *budtabell*); the last bid, which *lomber* plays | `contract`, `finalContract` |
+| *bud*, *slutbud* | a bid in the *budtabell*; the last bid, which *lomber* plays. The game actually played is chosen from the final bid's contracts (e.g. *Gask på 2* → trumf or misär) | `Bid`, `finalBid`; the game: `Contract` |
 | *pass* | to pass, and so leave the *budgivning* | `pass` |
-| *ta större*, *höja* | *lomber* taking the *slutbud* larger within its type, before the *köp* | `raiseContract` |
+| *ta större*, *höja* | *lomber* taking the *slutbud* larger within its family, before the *köp* | `raiseBid` |
 | *Bättre* | an already-said bid on the same level that restricts the choice of trump or *misär*: *Trumfgask* / *Trumfsolo*, *i Färg*, *i Högsta Färg*; at *Minusgask*, *Misärgask* (§4) | `upgrade` |
 | *Värre*, *i förhand* | taking over an already-said bid unchanged (FH, or MH from EH) | `takeOver` |
 | *avpassning*, *dubbelpass* | the end of the bidding: two passes | `passOut` |
-| *avpassningskonvention* (AK) | what a passer is expected to hold | `passingConvention` |
+| *avpassningskonvention* (AK) | what a passer is expected to hold; a bid's AK code (e.g. *3h*, *haja*) | `passingConvention`, `passingRequirement` |
 | *Första* / *Andra hand* (1a / 2a pass) | the first / second player to pass; at a *Gök*, only passes on the *Gök* bid itself count (§4.1) | `firstPasser`, `secondPasser` |
 | *tjuvpass*, *tjuvpassare* | a pass that doesn't meet the AK; the player who makes it | `unsoundPass`, `unsoundPasser` |
 | *kravbud* | a bid whose AK can cost *böter*: the three smallest *Gask* and every *Gök* | `penalisedPassBid` |
@@ -99,9 +100,11 @@ language a player sees. Display and input are localisable and belong to the mess
 | Term | Meaning | Code |
 |---|---|---|
 | *köp* | exchanging cards with the *talong* | `buy`, `buyPhase` |
-| *Omköp* (*Omturné*, *Omvingel*, *Omtringel*) | *lomber* buying again for one bet; the game text uses the name that fits the contract | `rebuy` |
+| *Omköp* (*Omturné*, *Omvingel*, *Omtringel*, *Ombyte*) | *lomber* buying again for one bet; the game text uses the name that fits the contract | `rebuy` |
 | *kasta*, *kastkort* | to give up cards in the *köp*; those cards | `discard`, `discardedCards` |
-| *uppslag* | the *talong* cards turned face up (*Turné*, *Vingel*, *Tupp*) | `turnUpCards` |
+| *uppslag* | the *talong* cards turned face up (*Turné*, *Vingel*, *Tringel*, *Tupp*) | `turnUpCards` |
+| *byte*, *bytkort* | in a *Tupp*: swapping turned-up cards into the hand; those cards | `swap`, `swapCards` |
+| *tuppstjärt* | a *Tupp*'s rejected *bytkort* and *kastade* handkort, lying open | `tuppTail` |
 | *nerslag* | the *Minusgask*'s top *talong* card, laid face down | `setAsideCard` |
 | *köphand*, *spelhand* | the hand after the *köp*; the hand *lomber* plays with | `boughtHand`, `playingHand` |
 | *lägga spelet*, *lagt spel* | *lomber* giving up after the *köp*; the result | `fold`, `folded` |
@@ -254,7 +257,9 @@ P = Petite, F = Falsk, O = Ouverte.
 - **Värre (i förhand):** FH may take over any already-said bid unchanged ("X i förhand");
   MH may take over EH's bid. EH may not.
 - After avpassning, lomber may take the slutbud **larger within its type** (e.g. Gask på 0 →
-  Gask på 2, Begär → Sjuspel, Solo 6 → Solo 8, Gökunge → Muntergök) before the köp.
+  Gask på 2, Begär → Sjuspel, Solo 6 → Solo 8, Gökunge → Muntergök) before the köp: to any
+  higher bid of the same family. A Solo may go to any higher Solo cell, trumf, misär or Hope
+  Solo (Solo 7 → Solo Grande Falsk Misär).
 
 ### 4.1 Avpassningskonventioner & böter
 - Each pass is checked against the AK for the bid passed on (see table). For Gök the first
@@ -272,36 +277,60 @@ Begärspel and Solo: tricks needed = the number in the name (Begär = 6-spel).
 
 - **Begär / N-spel:** lomber names trump (free, or restricted by "i Färg"/"i Högsta Färg")
   **before** the köp; discards any number (0–13) and draws as many **blind from the top**.
-  Then Omköp option (see below), then fold or play. Defence then buys (§5.1).
+  Then Omköp option (see below). Defence then buys (§5.1), then lomber folds or plays.
 - **Turné N:** top talong card is turned up; its suit is trump; it must be bought (counts as
   one of the drawn cards).
 - **Vingel N:** top two cards turned up; trump is chosen among their suits; both must be
   bought (they count among the drawn cards; may not be discarded). Omvingel needs ≥3 cards
   left (Omturné ≥2, Omtringel ≥4).
-- **Gask på n:** lomber keeps **n** givkort (chosen before seeing the talong), discards the
-  rest, takes the **whole talong**, discards down to 13, then chooses **trump** (needs 7+n
-  tricks, but Gask på 6 and Gask på 5 need 12 and Vira 13) or the misär type given in the
-  table (misär only up to Gask på 4). **Minusgask (−1):** the top talong card is
+- **Gask på n:** lomber keeps **n** givkort (chosen before seeing the talong), kastar the
+  rest and takes the **whole talong**. Lomber then chooses **trump** (needs 7+n tricks, but
+  Gask på 6 and Gask på 5 need 12 and Vira 13) or the misär type given in the table (misär
+  only up to Gask på 4), and only **after choosing** kastar as many cards as were kept,
+  down to 13. In misär lomber may kasta fewer and play with more than 13; a Petite misär
+  then kastar one more card (12). **Minusgask (−1):** the top talong card is
   turned face down (nerslag), lomber discards the whole hand, takes the other 12, chooses
   the game, then takes the face-down card. **Gask på 0:** no nerslag – whole talong (13).
   No defence köp in Gask.
 - **Gök (Gökägg / Gökunge / Muntergök):** misär. Lomber keeps the whole givhand and has the
-  whole talong; picks 13 of the 26. **Gökunge:** the talong is laid face up; talong cards
+  whole talong; after the köp lomber kastar (at most) 13 of the 26, so may play with more. **Gökunge:** the talong is laid face up; talong cards
   lomber takes are played **open** in front of lomber; rejected talong cards lie aside face
   up; an equal number of handkort are discarded face down. Gökägg = closed (sluten). No
   defence köp.
 - **Köp N (Köpmisär):** lomber buys at least N cards blind from the top (discarding as many).
-  Köp 4 = Petite Falsk: after the köp discard one more card and play with 12; one trick
-  allowed. The defence may then buy, or not, as they wish (the AI defenders follow the
+  Köp 4 and Köp 2 are Petite: after the **last** köp (after any Omköp) lomber may kasta one
+  more card and play with 12. Köp 4 and Köp 3 are Falsk: one trick allowed. The defence may then buy, or not, as they wish (the AI defenders follow the
   misär kutym in `agents/player.md`).
-- **Solo:** lomber does not buy and **cannot fold**; names trump before the defence köp.
-- **tRupp / tVupp / tTupp, Tringel, Hope Solo, Ouverte/Royale misärer:** not used in play yet
-  – implement from the rtf in a later phase.
+- **Solo:** lomber does not buy and **cannot fold**; names trump before the defence köp. A
+  Solo bid on a level with both a Solo misär and a Hope Solo (levels 3, 6, 12 …) lets lomber
+  choose between them after the bidding (and any *ta större*), before the defence köp. A
+  Solo Petite misär kastar its 13th card right after the bidding (Solo has no köp). All
+  Solo contracts are in the data; above havsytan μ counts as 0 until #27.
+- **Tringel 9:** like Vingel with three turned-up cards (trumf chosen among their suits, all
+  three must be bought); 9 tricks; Omtringel needs ≥4 cards left; paid triple.
+- **Vira (Gask på 13):** lomber keeps the whole givhand, takes the whole talong, kastar 13;
+  trumf only, all 13 tricks.
+- **tRupp / tVupp / tTupp (Uppslagsmisär):** misär. 3/2/1 talong cards are turned up and
+  can't be bought; lomber buys blind from the rest, then, before the defence köp and any
+  Ombyte, swaps in at least one turned-up card (bytkort). The first swapped card allows
+  kasting two handkort, the second one more, the third none; lomber may kasta fewer. Rejected
+  bytkort and kastade cards lie open (the tuppstjärt). Normally Petite. Ombyte: a new uppslag
+  of the same size, at least one swap again; needs one card beyond the uppslag left.
+  **Höna:** taking the whole uppslag and laying nothing away; plays with 16/15/14 cards (the
+  play ends with 3/2/1 left) and is paid double. It happens by itself when the tuppstjärt
+  stays empty; lomber doesn't choose or announce it. In the data it is a variant of the Tupp
+  contract (its swap's `whenTailEmpty`), not a contract of its own.
+- **In the data, mechanisms later (#27):** Tringel, Vira, the Tupp family (with Höna), Hope Solo
+  and the Ouverte/Royale misärer.
 
 **Omköp:** after a köp, lomber may pay one bet (36p: −36 lomber, +12 to each other player)
-and buy again; may be **repeated** while enough talong remains. Offer it after each köp.
+and buy again; may be **repeated** while enough talong remains: at least 1 card (Begär),
+N cards (Köp N), 2 (Omturné), 3 (Omvingel), 4 (Omtringel), or one more than the uppslag
+(Ombyte). Each Omköp costs as many bets as a hemgång gives (×2 for Vingel, ×3 for Tringel).
+Offer it after each köp.
 
-**Fold (lägga spelet):** allowed after the köp (not in Solo).
+**Fold (lägga spelet):** allowed after the köp and the defence köp, before the first trick
+(not in Solo).
 
 ### 5.1 Defence köp
 - In buying order medsols from lomber, skipping the resting player: **förste försvarare**

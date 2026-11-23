@@ -2,7 +2,7 @@
  * `npm run deal -- [seed] [players] [given]` (#46): deals giv 0 of a parti and prints it.
  * `npm run deal -- --help` (or -h) explains the parameters.
  */
-import { dealCards, deriveSeed, SEED_LIMIT } from "../engine/index.js";
+import { dealCards, deriveSeed, rulesetFor, SEED_LIMIT } from "../engine/index.js";
 import { parseDealArgs } from "./deal-args.js";
 import { describeGiv } from "./describe-giv.js";
 
@@ -29,7 +29,7 @@ if (args.kind === "help") {
   console.error(`${args.message}\nSee: npm run deal -- --help`);
   process.exitCode = 1;
 } else {
-  const deal = dealCards(args.given, args.players, deriveSeed(args.seed, 0), deriveSeed(args.seed, 1));
+  const deal = dealCards(args.given, rulesetFor(args.players), deriveSeed(args.seed, 0), deriveSeed(args.seed, 1));
   console.log(`Parti seed ${args.seed}, giv 0`);
   console.log(describeGiv(deal).join("\n"));
 }

@@ -39,7 +39,7 @@ After the slutbud, in this order, and wait for the user each time:
 2. **Köp** (which cards to discard / keep / take, per contract type).
 3. After the köp and after **every Omköp**: offer another **Omköp** while enough talong
    remains.
-4. **Fold (lägga spelet) or play.**
+4. After the defence köp: **fold (lägga spelet) or play.**
 
 The user may ask to see their discards (kastkort) until they play to the first trick –
 show them when asked.

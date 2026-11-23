@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  activeSeats, createRng, deriveSeed, drawSeating, nextDealer, rolesFor, SEED_LIMIT, shuffle,
+  activeSeats, createRng, deriveSeed, drawSeating, nextDealer, rolesFor, rulesetFor, SEED_LIMIT, shuffle,
 } from "../../src/engine/index.js";
 
 describe("seeded randomness", () => {
@@ -60,28 +60,28 @@ describe("seeded randomness", () => {
 describe("roles", () => {
   // Seats are numbered medsols: the seat to a player's left is the next number.
   it("at spel på fyra: FH left of given, MH left of FH, the seat right of given rests", () => {
-    expect(rolesFor(0, 4)).toEqual({ playerCount: 4, dealer: 0, forehand: 1, middlehand: 2, restingSeats: [3] });
-    expect(rolesFor(3, 4)).toEqual({ playerCount: 4, dealer: 3, forehand: 0, middlehand: 1, restingSeats: [2] });
+    expect(rolesFor(0, rulesetFor(4))).toEqual({ playerCount: 4, dealer: 0, forehand: 1, middlehand: 2, restingSeats: [3] });
+    expect(rolesFor(3, rulesetFor(4))).toEqual({ playerCount: 4, dealer: 3, forehand: 0, middlehand: 1, restingSeats: [2] });
   });
 
   it("at spel på tre: nobody rests", () => {
-    expect(rolesFor(1, 3)).toEqual({ playerCount: 3, dealer: 1, forehand: 2, middlehand: 0, restingSeats: [] });
+    expect(rolesFor(1, rulesetFor(3))).toEqual({ playerCount: 3, dealer: 1, forehand: 2, middlehand: 0, restingSeats: [] });
   });
 
   it("at spel på fem: both players next to given rest", () => {
-    const roles = rolesFor(0, 5);
+    const roles = rolesFor(0, rulesetFor(5));
     expect([...roles.restingSeats].sort()).toEqual([1, 4]);
     expect(activeSeats(roles)).toEqual([2, 3, 0]);
   });
 
   it("at spel på fem, also when given's neighbours wrap around the table", () => {
-    const roles = rolesFor(4, 5);
+    const roles = rolesFor(4, rulesetFor(5));
     expect([...roles.restingSeats].sort()).toEqual([0, 3]);
     expect(activeSeats(roles)).toEqual([1, 2, 4]);
   });
 
   it.each([[4, 4], [-1, 4], [1.5, 4], [5, 5]])("rejects dealer seat %s at a table of %s", (dealer, count) => {
-    expect(() => rolesFor(dealer, count as 4 | 5)).toThrow();
+    expect(() => rolesFor(dealer, rulesetFor(count as 4 | 5))).toThrow();
   });
 
   it.each([3, 4, 5] as const)("rotates so that everyone deals once per rond (%i players)", (count) => {
@@ -89,14 +89,14 @@ describe("roles", () => {
     const dealers: number[] = [];
     for (let giv = 0; giv < count; giv++) {
       dealers.push(dealer);
-      dealer = nextDealer(dealer, count);
+      dealer = nextDealer(dealer, rulesetFor(count));
     }
     expect([...dealers].sort()).toEqual(Array.from({ length: count }, (_, i) => i));
     expect(dealer).toBe(0);
   });
 
   it("at spel på fem, the next given is the player who just rested on given's left", () => {
-    const roles = rolesFor(0, 5);
-    expect(roles.restingSeats).toContain(nextDealer(0, 5));
+    const roles = rolesFor(0, rulesetFor(5));
+    expect(roles.restingSeats).toContain(nextDealer(0, rulesetFor(5)));
   });
 });
