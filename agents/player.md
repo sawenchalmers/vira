@@ -18,7 +18,7 @@ Return **only** a single JSON object with your move. No explanation, no reasonin
 | Decision | Return |
 |---|---|
 | bid | `{"bid":"Begär i Färg"}` or `{"pass":true}` |
-| take larger (lomber) | `{"raiseContract":"Sjuspel"}` (or the same contract) |
+| take larger (lomber) | `{"raiseBid":"Sjuspel"}` (or the same bid) |
 | trump | `{"trump":"♠"}` |
 | köp (lomber or defence) | `{"discard":["♣K","♥7"]}` (empty list = buy nothing) |
 | Omköp | `{"rebuy":true}` / `{"rebuy":false}` |
