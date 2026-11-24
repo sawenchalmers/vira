@@ -343,8 +343,14 @@ Offer it after each köp.
 ## 6. Play, results and payment
 
 - Normal trick-taking: must follow suit; trumps beat other suits; highest card of the led
-  suit wins otherwise. Play stops once the outcome is decided **[optional: allow claims
-  ("lägga upp")]**.
+  suit wins otherwise. EH leads to the first trick, and the winner of each trick leads to
+  the next.
+- Play lasts until either side runs out of cards. The defenders always hold 13, so a Petite
+  (lomber with 12) plays 12 tricks and the defenders keep one card each; a lomber who keeps
+  more cards in misär plays 13 tricks.
+- Play stops as soon as hemgång or kodilj is certain. A bet is only certain after the last
+  trick. **[Later: claims ("lägga upp"): a player shows their cards and states the result,
+  and play goes on if anyone asks for it to be proven.]**
 - Trump contract needing T tricks: ≥T = **hemgång**; T−1 = **bet**; ≤T−2 = **kodilj**.
 - Misär: Grande = 0 tricks allowed (1 = bet, 2 = kodilj); Falsk = 1 allowed (2 = bet,
   3 = kodilj).
