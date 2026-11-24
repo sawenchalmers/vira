@@ -137,7 +137,7 @@ language a player sees. Display and input are localisable and belong to the mess
 | *bet*, *betspel* | *lomber* is one trick short; a game played (not folded) and lost | `defeated` |
 | *kodilj* (*kossa*) | *lomber* is two or more tricks short; the tricks beyond are *kalvar* and aren't counted | `doubleDefeated` |
 | *Pinnar*, Π (P) | the payment from the game's price, Π = π (+ μ above *havsytan*) (§3, §6) | `pins`, `gamePrice` |
-| *Modpinnar*, *Fegpinnar* | no *Pinnar* after a *betspel*; below zero (*Minusgask*) the other way round: a *betspel* pays the *Pinnar* and a *lagt spel* pays none (*Fegpinnar*) | `couragePins`, `cowardPins` |
+| *Modpinnar*, *Fegpinnar* | no *Pinnar* after a *betspel*; below zero (*Minusgask*) the other way round: a *betspel* pays the *Pinnar* and a *lagt spel* pays none (*Fegpinnar*) | `pinDirection` |
 | *Betar*, *bet* | the stake: 36p for the player who lifts or puts in the bet, shared equally by the others (18p each at *spel på tre*, 12p at *fyra*, 9p at *fem*) | `stakes`, `stake` |
 | *pulla* | the box the bets are put in | `potBox` |
 | *pott* | the bets in the *pulla* | `pot` |

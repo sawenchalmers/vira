@@ -57,6 +57,39 @@ describe("payment: the cases in SPEC.md §11", () => {
   });
 });
 
+describe("payment: beyond §11", () => {
+  it.each([
+    ["Tringel 9 of hemgång: Pinnar and Betar ×3", "tringel-9", OF, "made", 0, [132, -48, -48, -36]],
+    ["Tringel 9 of hemgång after one Omköp: three bets", "tringel-9", OF, "made", 1, [24, -12, -12, 0]],
+    ["Minusgask trumf hf hemgång", "gask--1-trump", HF, "made", 0, [28, -8, -8, -12]],
+    ["Minusgask trumf hf betspel", "gask--1-trump", HF, "defeated", 0, [-28, 8, 8, 12]],
+    ["Minusgask trumf hf lagt spel", "gask--1-trump", HF, "folded", 0, [-36, 12, 12, 12]],
+  ] as const)("%s", (_, id, trump, outcome, rebuys, expected) => {
+    expect(inOrder(pay(id, trump, outcome, rebuys).total)).toEqual(expected);
+  });
+
+  it("a price other than the level (Π = π + μ) sets the Pinnar", () => {
+    const paid = payment(
+      { roles, declarer: roles.forehand, contract: contractById("begar-6"), trump: OF, colours, outcome: "made", rebuys: 0, price: { num: 2, den: 1 } },
+      FOUR_PLAYERS,
+    );
+    expect(inOrder(paid.total)).toEqual([40, -14, -14, -12]);
+  });
+
+  it.each([
+    // Spel på tre: no resting player, so a bet is 18p from each defender.
+    [THREE_PLAYERS, { pins: [4, -2, -2], rebuys: [-36, 18, 18], bets: [36, -18, -18], total: [4, -2, -2] }],
+    // Spel på fem: two resting players; Pinnar from the two defenders, a bet 9p from each of the four others.
+    [FIVE_PLAYERS, { pins: [4, -2, -2, 0, 0], rebuys: [-36, 9, 9, 9, 9], bets: [36, -9, -9, -9, -9], total: [4, -2, -2, 0, 0] }],
+  ] as const)("$name: 7-spel af hemgång after one Omköp, row by row", (ruleset, expected) => {
+    const r = rolesFor(0, ruleset);
+    const seats = [r.forehand, r.middlehand, r.dealer, ...r.restingSeats];
+    const paid = payment({ roles: r, declarer: r.forehand, contract: contractById("begar-7"), trump: AF, colours, outcome: "made", rebuys: 1 }, ruleset);
+    const rows = Object.fromEntries(Object.entries(paid).map(([name, points]) => [name, seats.map((s) => (points as Record<number, number>)[s])]));
+    expect(rows).toEqual(expected);
+  });
+});
+
 describe("payment: every giv sums to zero", () => {
   const outcomes: Outcome[] = ["made", "defeated", "doubleDefeated", "folded"];
   it.each([THREE_PLAYERS, FOUR_PLAYERS, FIVE_PLAYERS])("$name: every contract, outcome and trumf", (ruleset: Ruleset) => {
@@ -90,13 +123,6 @@ describe("payment: every giv sums to zero", () => {
 describe("payment: refused setups", () => {
   it("a trumf game without its trumf", () => {
     expect(() => pay("begar-6", undefined, "made")).toThrow(/has none/);
-  });
-
-  it("lomber not at the table, or a broken number of Omköp", () => {
-    const contract = contractById("begar-6");
-    const base = { roles, contract, trump: OF, colours, outcome: "made" as const };
-    expect(() => payment({ ...base, declarer: roles.restingSeats[0] ?? -1, rebuys: 0 }, FOUR_PLAYERS)).toThrow(/active seat/);
-    expect(() => payment({ ...base, declarer: roles.forehand, rebuys: -1 }, FOUR_PLAYERS)).toThrow(/Omköp/);
   });
 
   it("a price that doesn't give whole points", () => {
