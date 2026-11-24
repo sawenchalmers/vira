@@ -137,7 +137,7 @@ language a player sees. Display and input are localisable and belong to the mess
 | *bet*, *betspel* | *lomber* is one trick short; a game played (not folded) and lost | `defeated` |
 | *kodilj* (*kossa*) | *lomber* is two or more tricks short; the tricks beyond are *kalvar* and aren't counted | `doubleDefeated` |
 | *Pinnar*, Π (P) | the payment from the game's price, Π = π (+ μ above *havsytan*) (§3, §6) | `pins`, `gamePrice` |
-| *Modpinnar*, *Fegpinnar* | no *Pinnar* after a *betspel*; in *Minusgask* a *betspel* pays *Pinnar* instead (*Fegpinnar*) | `couragePins`, `cowardPins` |
+| *Modpinnar*, *Fegpinnar* | no *Pinnar* after a *betspel*; below zero (*Minusgask*) the other way round: a *betspel* pays the *Pinnar* and a *lagt spel* pays none (*Fegpinnar*) | `couragePins`, `cowardPins` |
 | *Betar*, *bet* | the stake: 36p for the player who lifts or puts in the bet, shared equally by the others (18p each at *spel på tre*, 12p at *fyra*, 9p at *fem*) | `stakes`, `stake` |
 | *pulla* | the box the bets are put in | `potBox` |
 | *pott* | the bets in the *pulla* | `pot` |
@@ -216,7 +216,7 @@ Notes from the table:
   whenever the pott drops below three bets, every player puts one bet in the pulla.
   (#27, after 1.0.)
 - Vingel is paid double, Tringel triple.
-- Modpinnar at betspel; in Minusgask a betspel pays Pinnar instead (Fegpinnar).
+- Modpinnar at betspel; below zero (Minusgask) a betspel pays the Pinnar and a lagt spel none (Fegpinnar), §6.
 
 AK abbreviations: h = håll, d = dubbelhåll, f = håll of which 2 in the Färger, of = håll in
 Ofärger, a = antydan (halvgard; "2a" can be replaced by a låggard), l = låggard (äkta
@@ -357,10 +357,15 @@ Offer it after each köp.
 - **Pinnar** = P × factor per defender, where P = Π of the contract (fractions like 4/3 are
   allowed), factor = of ×1, af ×2, hf ×4, misär ×3; Vingel ×2, Tringel ×3.
   - Hemgång: each defender pays Pinnar to lomber.
-  - Betspel (played and lost): **Modpinnar** – no Pinnar are paid. Exception: in Minusgask
-    a betspel pays Pinnar (**Fegpinnar**).
+  - Betspel (played and lost): **Modpinnar** – no Pinnar are paid.
   - Kodilj: lomber pays Pinnar to each defender.
   - Lagt spel: lomber pays Pinnar to each defender.
+  - The rule behind the last two: a betspel gets the kinder of paying the Pinnar or not,
+    a lagt spel the harsher ("lagt spel can't be punished more mildly than a brave betspel").
+    Below zero (**Minusgask**, Π = −1) the Pinnar are negative and paying them is a gain for
+    lomber, so it turns around: a played bet pays the Pinnar, as at kodilj (no Modpinnar),
+    and a folded one pays none: the Pinnar are zeroed (**Fegpinnar**). As a misär (×3):
+    hemgång +30, betspel −30, kodilj −66, lagt spel −36.
 - **Betar:** one bet = 36p (spel på fyra), split 12p per other player, the resting player
   included.
   - Hemgång: lomber +36, others −12 each.
@@ -448,6 +453,15 @@ Spel på fyra, betar 36p. Order: lomber, förste försvarare, andre försvarare,
 | Turné 6 hf hemgång after one Omköp | +8 | −4 | −4 | 0 |
 | Gökunge (Π4/3, misär ×3) hemgång, förste försvarare tjuvpassed (böter) | +56 | −52 | −4 | 0 |
 | Köp 4 betspel | −36 | +12 | +12 | +12 |
+| Minusgask misär (Π−1, ×3) hemgång | +30 | −9 | −9 | −12 |
+| Minusgask misär betspel | −30 | +9 | +9 | +12 |
+| Minusgask misär kodilj | −66 | +21 | +21 | +24 |
+| Minusgask misär lagt spel | −36 | +12 | +12 | +12 |
+
+The Gökunge row includes böter: förste försvarare pays one bet for the failed tjuvpass
+(−36 to them, +12 to each other player, §4.1). Without them it is +44 −16 −16 −12.
+The Minusgask rows are from the rule document's own figures (30p, 66p, 36p), confirmed by the
+user, not yet from play.
 
 Full-deal regression test (Gökunge, user = lomber, hemgång with 0 tricks):
 - Färg card ♦E (hf ♦, af ♥). Given Carlsson (EH), FH Toivo, MH Andersson, Bengtsson rests.
