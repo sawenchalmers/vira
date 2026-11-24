@@ -36,7 +36,7 @@ export interface TakenTrick extends Trick {
 
 export interface Play {
   readonly roles: Roles;
-  readonly lomber: Seat;
+  readonly declarer: Seat;
   /** Undefined in misär, which has no trumf. */
   readonly trump: Suit | undefined;
   readonly goal: Goal;
@@ -46,19 +46,28 @@ export interface Play {
   /** The trick being played; no cards yet when a trick is to be led. */
   readonly current: Trick;
   /** How many tricks the giv has: until the side with the fewest cards runs out. */
-  readonly tricksInGiv: number;
+  readonly tricksInDeal: number;
 }
 
 const handOf = (play: Play, seat: Seat): readonly Card[] => play.hands[seat] ?? [];
 
-/** Starts the play: EH leads to the first trick. */
-export const startPlay = (setup: Pick<Play, "roles" | "lomber" | "trump" | "goal" | "hands">): Play => {
-  const seats = activeSeats(setup.roles);
-  if (!seats.includes(setup.lomber)) throw new Error(`Lomber (seat ${setup.lomber}) isn't an active seat`);
-  const sizes = seats.map((seat) => setup.hands[seat]?.length ?? 0);
-  const tricksInGiv = Math.min(...sizes);
-  if (tricksInGiv === 0) throw new Error("Every active seat needs cards to play");
-  return { ...setup, taken: [], current: { leader: setup.roles.dealer, cards: [] }, tricksInGiv };
+/**
+ * Starts the play: EH leads to the first trick. Refuses a setup no giv can lead to, so a
+ * caller's mistake shows at once rather than as a strange result.
+ */
+export const startPlay = (setup: Pick<Play, "roles" | "declarer" | "trump" | "goal" | "hands">): Play => {
+  const { roles, declarer, trump, goal, hands } = setup;
+  const seats = activeSeats(roles);
+  if (!seats.includes(declarer)) throw new Error(`Lomber (seat ${declarer}) isn't an active seat`);
+  const defenders = seats.filter((seat) => seat !== declarer).map((seat) => hands[seat]?.length ?? 0);
+  if (new Set(defenders).size > 1) throw new Error(`The defenders hold different numbers of cards: ${defenders.join(", ")}`);
+  const all = seats.flatMap((seat) => hands[seat] ?? []);
+  if (all.some((card, i) => all.findIndex((c) => sameCard(c, card)) !== i)) throw new Error("A card is in two hands");
+  if ((goal.kind === "misere") !== (trump === undefined)) throw new Error("A misär has no trumf, and a trick game has one");
+  const tricksInDeal = Math.min(...seats.map((seat) => hands[seat]?.length ?? 0));
+  if (tricksInDeal === 0) throw new Error("Every active seat needs cards to play");
+  if (goal.kind === "tricks" && goal.min > tricksInDeal) throw new Error(`${goal.min} tricks can't be taken in ${tricksInDeal}`);
+  return { ...setup, taken: [], current: { leader: roles.dealer, cards: [] }, tricksInDeal };
 };
 
 /** The card that takes the trick: the highest trumf, otherwise the highest card of the led suit. */
@@ -71,14 +80,14 @@ export const trickWinner = (cards: readonly PlayedCard[], trump: Suit | undefine
 };
 
 /** How many tricks lomber and the defence have taken (Ställning). */
-export const trickCount = (play: Play): { readonly lomber: number; readonly defence: number } => {
-  const lomber = play.taken.filter((t) => t.winner === play.lomber).length;
-  return { lomber, defence: play.taken.length - lomber };
+export const trickCount = (play: Play): { readonly declarer: number; readonly defence: number } => {
+  const declarer = play.taken.filter((t) => t.winner === play.declarer).length;
+  return { declarer, defence: play.taken.length - declarer };
 };
 
-/** The result once lomber has taken `lomberTricks` tricks. */
-export const resultOf = (goal: Goal, lomberTricks: number): Result => {
-  const short = goal.kind === "tricks" ? goal.min - lomberTricks : lomberTricks - goal.tricksAllowed;
+/** The result once lomber has taken `declarerTricks` tricks. */
+export const resultOf = (goal: Goal, declarerTricks: number): Result => {
+  const short = goal.kind === "tricks" ? goal.min - declarerTricks : declarerTricks - goal.tricksAllowed;
   if (short >= DOUBLE_DEFEATED_BY) return "doubleDefeated";
   return short >= DEFEATED_BY ? "defeated" : "made";
 };
@@ -88,10 +97,10 @@ export const resultOf = (goal: Goal, lomberTricks: number): Result => {
  * hemgång or kodilj is clear, as the rules say; a bet is only certain when the last trick is played.
  */
 export const outcome = (play: Play): Result | undefined => {
-  const { lomber } = trickCount(play);
-  const left = play.tricksInGiv - play.taken.length;
-  const worst = resultOf(play.goal, play.goal.kind === "tricks" ? lomber : lomber + left);
-  const best = resultOf(play.goal, play.goal.kind === "tricks" ? lomber + left : lomber);
+  const { declarer } = trickCount(play);
+  const left = play.tricksInDeal - play.taken.length;
+  const worst = resultOf(play.goal, play.goal.kind === "tricks" ? declarer : declarer + left);
+  const best = resultOf(play.goal, play.goal.kind === "tricks" ? declarer + left : declarer);
   return worst === best ? worst : undefined;
 };
 
