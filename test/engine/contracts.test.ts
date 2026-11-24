@@ -32,7 +32,6 @@ describe("the contract records", () => {
       if (c.payment.factor === "misere") expect(c.goal.kind, c.id).toBe("misere");
       if (c.goal.kind === "misere") expect(["misere", "offSuit"], c.id).toContain(c.payment.factor);
       if (!["vingel", "tringel"].includes(c.family)) expect(c.payment.multiplier, c.id).toBe(1);
-      if (c.family !== "gask") expect(c.payment.cowardPins, c.id).toBe(false);
       // A Petite gets down to 12 in a discard phase, except a Tupp, which kastar as it swaps.
       if (c.handSize === 12 && c.swap === null) expect(c.discard?.downTo, c.id).toBe(12);
       if (c.discard?.mayKeepMore) expect(c.goal.kind, c.id).toBe("misere");
@@ -146,9 +145,9 @@ describe("Gask", () => {
     expect(contractById("gask-1-misere").discard).toEqual({ after: "choice", downTo: 12, mayKeepMore: true });
   });
 
-  it("has Fegpinnar in Minusgask only, and no defence köp or Omköp", () => {
+  it("has no defence köp or Omköp, and only Minusgask is below zero (so only it has Fegpinnar)", () => {
+    for (const c of CONTRACTS) expect(c.level.num < 0, c.id).toBe(c.id.startsWith("gask--1"));
     for (const c of CONTRACTS.filter((c) => c.family === "gask")) {
-      expect(c.payment.cowardPins, c.id).toBe(c.id.startsWith("gask--1"));
       expect(c.allowed.defenceBuy, c.id).toBe(false);
       expect(c.allowed.rebuy, c.id).toBe(false);
     }

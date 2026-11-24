@@ -139,8 +139,6 @@ export interface Contract {
      * It multiplies both the Pinnar and the Betar (SPEC.md §6).
      */
     readonly multiplier: number;
-    /** Minusgask: a betspel pays Pinnar (Fegpinnar) instead of Modpinnar. */
-    readonly cowardPins: boolean;
   };
 }
 
@@ -153,7 +151,7 @@ const begar = (tricks: number, lvl: Level): Contract => {
     goal: { kind: "tricks", min: tricks }, handSize: 13, trump: "named", turnUp: null, swap: null,
     buy: { kind: "blind", min: 0, max: 13 }, discard: null, visibility: "closed",
     allowed: { rebuy: true, rebuyMinTalon: 1, fold: true, defenceBuy: true },
-    payment: { factor: "bySuit", multiplier: 1, cowardPins: false },
+    payment: { factor: "bySuit", multiplier: 1 },
   };
 };
 
@@ -179,7 +177,7 @@ const turnUp = (family: TurnUpFamily, tricks: number, lvl: Level): Contract => {
     buy: { kind: "blind", min: cards, max: 13 }, discard: null, visibility: "closed",
     // A rebuy turns up as many again and needs one more card left: Omturné 2, Omvingel 3, Omtringel 4.
     allowed: { rebuy: true, rebuyMinTalon: cards + 1, fold: true, defenceBuy: true },
-    payment: { factor: "bySuit", multiplier: PAYMENT_MULTIPLIERS[family] ?? 1, cowardPins: false },
+    payment: { factor: "bySuit", multiplier: PAYMENT_MULTIPLIERS[family] ?? 1 },
   };
 };
 
@@ -223,14 +221,14 @@ const gask = (n: number, lvl: Level, misereSize?: MisereSize): Contract[] => {
   };
   const trumpGame: Contract = {
     ...common, id: `gask-${n}-trump`, name: `${name} (trumf)`, goal: { kind: "tricks", min: tricks }, handSize: 13,
-    discard: { after: "choice", downTo: 13, mayKeepMore: false }, trump: "afterBuy", visibility: "closed", payment: { factor: "bySuit", multiplier: 1, cowardPins: n === MINUSGASK },
+    discard: { after: "choice", downTo: 13, mayKeepMore: false }, trump: "afterBuy", visibility: "closed", payment: { factor: "bySuit", multiplier: 1 },
   };
   if (misereSize === undefined) return [trumpGame];
   const misereGame: Contract = {
     ...common, ...misere(misereSize), id: `gask-${n}-misere`, name: `${name} (misär)`, trump: "none",
     // After choosing misär, kasta down to 13 (12 for a Petite), or fewer: misär may play with more.
     discard: { after: "choice", downTo: misere(misereSize).handSize, mayKeepMore: true },
-    payment: { factor: "misere", multiplier: 1, cowardPins: n === MINUSGASK },
+    payment: { factor: "misere", multiplier: 1 },
   };
   return [trumpGame, misereGame];
 };
@@ -241,7 +239,7 @@ const kopmisar = (n: number, lvl: Level, size: MisereSize): Contract => {
     id: `kop-${n}`, name: `Köp ${n}`, family: "kopmisar", level: lvl, ...misere(size), trump: "none", turnUp: null, swap: null,
     buy: { kind: "blind", min: n, max: 13 },
     allowed: { rebuy: true, rebuyMinTalon: n, fold: true, defenceBuy: true },
-    payment: { factor: "misere", multiplier: 1, cowardPins: false },
+    payment: { factor: "misere", multiplier: 1 },
   };
 };
 
@@ -275,7 +273,7 @@ const tupp = (n: TuppSize, lvl: Level): Contract => {
       min: 1, discardPerSwap: DISCARD_PER_SWAP,
       whenTailEmpty: { name: `Höna (${TUPP_NAMES[n]})`, handSize: 13 + n, multiplier: HONA_MULTIPLIER },
     },
-    payment: { factor: "misere", multiplier: 1, cowardPins: false },
+    payment: { factor: "misere", multiplier: 1 },
   };
 };
 
@@ -287,7 +285,7 @@ const gok = (id: string, name: string, lvl: Level, size: MisereSize, openTalon: 
     // "efter Köpet kastas (högst) tretton kort": at most 13, so lomber may play with more.
     discard: { after: "buy", downTo: 13, mayKeepMore: true },
     allowed: { ...NO_REBUY, fold: true, defenceBuy: false },
-    payment: { factor: "misere", multiplier: 1, cowardPins: false },
+    payment: { factor: "misere", multiplier: 1 },
   };
 };
 
@@ -301,7 +299,7 @@ const solo = (tricks: number, lvl: Level): Contract => {
   return {
     ...SOLO_COMMON, id: `solo-${tricks}`, name: tricks === 13 ? "Solo Vira" : `Solo ${tricks}`, family: "solo",
     level: lvl, goal: { kind: "tricks", min: tricks }, handSize: 13, discard: null, trump: "named",
-    visibility: "closed", payment: { factor: "bySuit", multiplier: 1, cowardPins: false },
+    visibility: "closed", payment: { factor: "bySuit", multiplier: 1 },
   };
 };
 
@@ -310,7 +308,7 @@ const soloMisere = (size: MisereSize, name: string, lvl: Level): Contract => {
   const params = misere(size, "bidding");
   return {
     ...SOLO_COMMON, ...params, id: `solo-misere-${size.toLowerCase()}`, name, family: "solo", level: lvl, trump: "none",
-    payment: { factor: params.visibility === "royale" ? "offSuit" : "misere", multiplier: 1, cowardPins: false },
+    payment: { factor: params.visibility === "royale" ? "offSuit" : "misere", multiplier: 1 },
   };
 };
 
@@ -319,7 +317,7 @@ const hopeSolo = (tricks: number, lvl: Level): Contract => {
   return {
     ...SOLO_COMMON, id: `hope-solo-${tricks}`, name: `Hope Solo ${tricks}`, family: "hopeSolo", level: lvl,
     goal: { kind: "tricks", min: tricks }, handSize: 13, discard: null, trump: "named", visibility: "royale",
-    payment: { factor: "offSuit", multiplier: 1, cowardPins: false },
+    payment: { factor: "offSuit", multiplier: 1 },
   };
 };
 
